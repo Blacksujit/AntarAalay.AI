@@ -1,0 +1,3 @@
+Vastu API - https://astrologyapi.com/docs/api-ref/48/numero_place_vastu
+
+

@@ -1,0 +1,7 @@
+🔑 What Makes Your Product Different from Existing Solutions?
+Your Product	Others
+✅ AI + Vastu + AR	❌ Vastu not considered
+✅ End-to-end: upload → get design → preview	❌ Fragmented tools
+✅ Budget-sensitive & marketplace integrated	❌ Static or designer-only apps
+✅ Personalized and cultural (Indian design support)	❌ Mostly western-centric designs
+✅ Multi-role (Users + Agencies) support	❌ Mostly single-user tools
