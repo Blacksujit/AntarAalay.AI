@@ -1,0 +1,49 @@
+                  ┌────────────────────────────┐
+                  │        Frontend (React)    │
+                  │                            │
+                  │  - User Login/Signup       │
+                  │  - Upload Room Image       │
+                  │  - View AI Designs         │
+                  │  - Vastu Suggestions       │
+                  │  - Design Comparisons      │
+                  └────────────┬───────────────┘
+                               │ REST API / WebSocket
+                               ▼
+┌────────────────────────────────────────────────────────────┐
+│                   Backend (Flask or FastAPI)               │
+│  ┌────────────────────┬──────────────────────────────┐     │
+│  │ Authentication     │  Room & Design API           │     │
+│  │ (Firebase/Supabase)│  - Upload & store images     │     │
+│  └────────────────────┘  - Trigger ML model          │     │
+│                          - Get Vastu suggestions     │     │
+│                          - Save design states        │     │
+│                          - Return results            │     │
+│                          - Budget calculation        │     │
+│                                                      │     │
+│  ┌────────────────────┐  ┌────────────────────────┐  │     │
+│  │ AI Engine (ML APIs)│  │ Vastu Engine           │  │     │
+│  │ - Stable Diffusion │  │ - Direction analysis   │  │     │
+│  │ - ControlNet        │  │ - Rules engine         │  │     │
+│  │ - Layout gen        │  │ - Compass logic        │  │     │
+│  └────────────────────┘  └────────────────────────┘  │     │
+└────────────────────────────────────────────────────────────┘
+                               │
+                               ▼
+                ┌────────────────────────────┐
+                │   Firebase / Supabase DB   │
+                │ - User data (profile, auth)│
+                │ - Uploaded images & links  │
+                │ - AI output URLs           │
+                │ - Saved designs, feedback  │
+                └────────────────────────────┘
+                               │
+                               ▼
+                ┌────────────────────────────┐
+                │   Cloud Storage (Firebase  │
+                │       or AWS S3 Bucket)    │
+                │ - Room images              │
+                │ - Generated AI images      │
+                │ - Blueprints (PDF, JSON)   │
+                └────────────────────────────┘
+
+
