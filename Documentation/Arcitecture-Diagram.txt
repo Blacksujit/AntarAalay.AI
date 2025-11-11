@@ -23,8 +23,8 @@
 │  ┌────────────────────┐  ┌────────────────────────┐  │     │
 │  │ AI Engine (ML APIs)│  │ Vastu Engine           │  │     │
 │  │ - Stable Diffusion │  │ - Direction analysis   │  │     │
-│  │ - ControlNet        │  │ - Rules engine         │  │     │
-│  │ - Layout gen        │  │ - Compass logic        │  │     │
+│  │ - ControlNet       │  │ - Rules engine         │  │     │
+│  │ - Layout gen       │  │ - Compass logic        │  │     │
 │  └────────────────────┘  └────────────────────────┘  │     │
 └────────────────────────────────────────────────────────────┘
                                │
