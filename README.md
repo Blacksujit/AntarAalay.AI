@@ -139,14 +139,14 @@ AntarAalay.ai/
 └── DEPLOYMENT.md
 ```
 
-## Deployment
+<!-- ## Deployment
 
 See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed deployment instructions.
 
 **Backend**: Docker → Render/EC2
 **Frontend**: Vercel
 **Database**: Supabase
-**Storage**: AWS S3
+**Storage**: AWS S3 -->
 
 ## License
 
