@@ -17,12 +17,12 @@ Transform your space with AI-generated interior designs that align with ancient 
 ### Backend
 - Python 3.11 + FastAPI
 - SQLAlchemy + Supabase PostgreSQL
-- AWS S3 for image storage
+- Firebase cloud storage
 - Firebase Authentication
 - Stability AI (Stable Diffusion)
 
 ### Frontend
-- React + TypeScript + Vite
+- Next.js + TypeScript + Vite
 - Tailwind CSS
 - Zustand (state management)
 - React Query (data fetching)
@@ -35,7 +35,7 @@ Transform your space with AI-generated interior designs that align with ancient 
 - Node.js 18+
 - Python 3.11+
 - PostgreSQL (or Supabase account)
-- AWS S3 bucket
+- Firebase storage bucket
 - Firebase project
 - Stability AI API key
 
