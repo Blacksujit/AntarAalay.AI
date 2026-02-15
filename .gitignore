@@ -1,1 +1,95 @@
+# Project-specific
 Project-Research/
+
+# Environment variables - NEVER commit these
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+.env.test
+
+# Backend
+Backend/.env
+Backend/.env.*
+Backend/__pycache__/
+Backend/**/*.pyc
+Backend/**/*.pyo
+Backend/**/*.pyd
+Backend/.Python
+Backend/*.db
+Backend/*.sqlite
+Backend/*.sqlite3
+Backend/antaralay.db
+Backend/venv/
+Backend/env/
+Backend/.venv/
+
+# Frontend
+Frontend/.env
+Frontend/.env.*
+Frontend/node_modules/
+Frontend/dist/
+Frontend/dist-ssr/
+Frontend/*.local
+
+# Firebase credentials
+serviceAccountKey.json
+firebase-credentials.json
+*firebase*.json
+*serviceAccount*.json
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+.nox/
