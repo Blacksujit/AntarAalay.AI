@@ -24,6 +24,7 @@ Backend/antaralay.db
 Backend/venv/
 Backend/env/
 Backend/.venv/
+Backend/firebase.txt
 
 # Frontend
 Frontend/.env
