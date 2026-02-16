@@ -1,19 +1,34 @@
-import { useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { getRoomDesignsWithDetails } from '../services/design';
-import type { DesignWithDetails, FurnitureItem } from '../services/design';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { getRoomDesignsWithDetails, regenerateDesign } from '../services/design';
+import type { FurnitureItem } from '../services/design';
 import { getDirectionColor } from '../services/vastu';
-import { Sparkles, ArrowLeft, CheckCircle, AlertTriangle, IndianRupee, Home } from 'lucide-react';
+import { Sparkles, ArrowLeft, CheckCircle, AlertTriangle, IndianRupee, Home, RefreshCw, Palette } from 'lucide-react';
 
 export default function Designs() {
   const { roomId } = useParams<{ roomId: string }>();
   const navigate = useNavigate();
+  const [showCustomize, setShowCustomize] = useState(false);
+  const [customization, setCustomization] = useState({
+    wall_color: '',
+    flooring: '',
+    furniture_style: '',
+    style: 'modern'
+  });
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['roomDesigns', roomId],
     queryFn: () => getRoomDesignsWithDetails(roomId!),
     enabled: !!roomId,
+  });
+
+  const regenerateMutation = useMutation({
+    mutationFn: (designId: string) => regenerateDesign(designId, customization),
+    onSuccess: () => {
+      refetch();
+      setShowCustomize(false);
+    }
   });
 
   if (isLoading) {
@@ -141,6 +156,101 @@ export default function Designs() {
                         </div>
                       ))}
                   </div>
+
+                  {/* Customization & Regenerate */}
+                  {latestDesign?.status === 'completed' && (
+                    <div className="bg-white/80 rounded-2xl p-6 border border-amber-100">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-semibold text-amber-950 flex items-center gap-2">
+                          <Palette className="w-5 h-5 text-amber-600" />
+                          Customize & Regenerate
+                        </h3>
+                        <button
+                          onClick={() => setShowCustomize(!showCustomize)}
+                          className="text-amber-600 hover:text-amber-700 font-medium text-sm"
+                        >
+                          {showCustomize ? 'Hide' : 'Show'} Options
+                        </button>
+                      </div>
+                      
+                      {showCustomize && (
+                        <div className="space-y-4">
+                          <div className="grid md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-amber-800 mb-1">
+                                Wall Color
+                              </label>
+                              <input
+                                type="text"
+                                value={customization.wall_color}
+                                onChange={(e) => setCustomization({...customization, wall_color: e.target.value})}
+                                placeholder="e.g., warm beige, sky blue"
+                                className="w-full px-3 py-2 border border-amber-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-amber-800 mb-1">
+                                Flooring
+                              </label>
+                              <input
+                                type="text"
+                                value={customization.flooring}
+                                onChange={(e) => setCustomization({...customization, flooring: e.target.value})}
+                                placeholder="e.g., hardwood, marble tiles"
+                                className="w-full px-3 py-2 border border-amber-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-amber-800 mb-1">
+                                Furniture Style
+                              </label>
+                              <input
+                                type="text"
+                                value={customization.furniture_style}
+                                onChange={(e) => setCustomization({...customization, furniture_style: e.target.value})}
+                                placeholder="e.g., modern, traditional Indian"
+                                className="w-full px-3 py-2 border border-amber-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-amber-800 mb-1">
+                                Overall Style
+                              </label>
+                              <select
+                                value={customization.style}
+                                onChange={(e) => setCustomization({...customization, style: e.target.value})}
+                                className="w-full px-3 py-2 border border-amber-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                              >
+                                <option value="modern">Modern</option>
+                                <option value="traditional">Traditional Indian</option>
+                                <option value="contemporary">Contemporary</option>
+                                <option value="minimalist">Minimalist</option>
+                                <option value="luxury">Luxury</option>
+                              </select>
+                            </div>
+                          </div>
+                          
+                          <button
+                            onClick={() => regenerateMutation.mutate(latestDesign.id)}
+                            disabled={regenerateMutation.isPending}
+                            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-amber-600 text-white rounded-xl font-medium hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {regenerateMutation.isPending ? (
+                              <>
+                                <RefreshCw className="w-5 h-5 animate-spin" />
+                                Regenerating...
+                              </>
+                            ) : (
+                              <>
+                                <RefreshCw className="w-5 h-5" />
+                                Regenerate with Customizations
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Budget & Vastu Summary */}
                   {latestDesign?.status === 'completed' && (

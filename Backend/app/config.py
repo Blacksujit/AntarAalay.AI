@@ -32,13 +32,19 @@ class Settings(BaseSettings):
     HOST: str = "0.0.0.0"
     PORT: int = 8000
     
-    # Database - Supabase Postgres
-    DATABASE_URL: str = "postgresql://user:password@localhost:5432/antaralay"
+    # Database - SQLite for local dev
+    DATABASE_URL: str = "sqlite:///./antaralay.db"
     
     # Firebase Configuration
-    FIREBASE_PROJECT_ID: str = ""
-    FIREBASE_API_KEY: str = ""
+    FIREBASE_API_KEY: str = "AIzaSyANQciKqx_Cyi92ahSVaLy_MewUDkZY3fg"
+    FIREBASE_AUTH_DOMAIN: str = "antaraalayai.firebaseapp.com"
+    FIREBASE_PROJECT_ID: str = "antaraalayai"
+    FIREBASE_STORAGE_BUCKET: str = "antaraalayai.firebasestorage.app"
+    FIREBASE_MESSAGING_SENDER_ID: str = "656663048044"
+    FIREBASE_APP_ID: str = "1:656663048044:web:802e1ef31aaf30eb2a0d49"
+    FIREBASE_MEASUREMENT_ID: str = "G-07QNHQGWJ0"
     FIREBASE_AUTH_EMULATOR_HOST: Optional[str] = None  # For local testing
+    FIREBASE_CREDENTIALS_PATH: str = ""  # Path to service account JSON (for backend)
     
     # External APIs
     STABLE_DIFFUSION_API_KEY: str = ""
@@ -53,6 +59,13 @@ class Settings(BaseSettings):
     # Security & Validation
     MAX_UPLOAD_SIZE: int = 10 * 1024 * 1024  # 10MB
     ALLOWED_IMAGE_TYPES: str = "image/jpeg,image/png,image/webp"
+
+    # AWS / S3 Configuration (legacy + optional)
+    AWS_ACCESS_KEY_ID: str = ""
+    AWS_SECRET_ACCESS_KEY: str = ""
+    AWS_REGION: str = ""
+    S3_BUCKET_NAME: str = ""
+    S3_ENDPOINT_URL: str = ""
     
     @property
     def allowed_image_types_list(self) -> List[str]:
@@ -73,7 +86,7 @@ class Settings(BaseSettings):
     @classmethod
     def validate_database_url(cls, v):
         """Ensure database URL is valid (PostgreSQL or SQLite)."""
-        if v and not v.startswith(("postgresql://", "postgres://", "sqlite:///")):
+        if v and not v.startswith(("postgresql://", "postgres://", "sqlite:///", "sqlite://")):
             raise ValueError("DATABASE_URL must be a PostgreSQL or SQLite connection string")
         return v
     
@@ -91,7 +104,10 @@ class ConfigurationError(Exception):
     def __init__(self, message: str, missing_vars: List[str] = None):
         self.message = message
         self.missing_vars = missing_vars or []
-        super().__init__(self.message)
+        if self.missing_vars:
+            super().__init__(f"{self.message}: {', '.join(self.missing_vars)}")
+        else:
+            super().__init__(self.message)
 
 
 def validate_production_config(settings: Settings) -> None:
@@ -103,7 +119,17 @@ def validate_production_config(settings: Settings) -> None:
     """
     required_vars = {
         "DATABASE_URL": settings.DATABASE_URL,
+        "AWS_ACCESS_KEY_ID": settings.AWS_ACCESS_KEY_ID,
+        "AWS_SECRET_ACCESS_KEY": settings.AWS_SECRET_ACCESS_KEY,
+        "AWS_REGION": settings.AWS_REGION,
+        "S3_BUCKET_NAME": settings.S3_BUCKET_NAME,
+        "FIREBASE_API_KEY": settings.FIREBASE_API_KEY,
+        "FIREBASE_AUTH_DOMAIN": settings.FIREBASE_AUTH_DOMAIN,
         "FIREBASE_PROJECT_ID": settings.FIREBASE_PROJECT_ID,
+        "FIREBASE_STORAGE_BUCKET": settings.FIREBASE_STORAGE_BUCKET,
+        "FIREBASE_MESSAGING_SENDER_ID": settings.FIREBASE_MESSAGING_SENDER_ID,
+        "FIREBASE_APP_ID": settings.FIREBASE_APP_ID,
+        "FIREBASE_MEASUREMENT_ID": settings.FIREBASE_MEASUREMENT_ID,
     }
     
     missing = [name for name, value in required_vars.items() if not value]

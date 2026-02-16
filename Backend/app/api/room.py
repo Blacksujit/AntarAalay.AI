@@ -1,13 +1,16 @@
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
+"""
+Room Upload API Routes
+POST /api/room/upload
+"""
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status
 from typing import Dict
-
 from app.dependencies import get_current_user
 from app.services.room_service import room_upload_service
 
 router = APIRouter(prefix="/room", tags=["room"])
 
 
-@router.post("/upload")
+@router.post("/upload", response_model=Dict)
 async def upload_room_images(
     north: UploadFile = File(..., description="North facing image"),
     south: UploadFile = File(..., description="South facing image"),
@@ -53,14 +56,17 @@ async def upload_room_images(
         )
 
 
+@router.get("/user/rooms")
+async def get_user_rooms(current_user: dict = Depends(get_current_user)):
+    """Get all rooms for the current user."""
+    user_id = current_user.get('localId') or current_user.get('user_id')
+    rooms = await room_upload_service.get_user_rooms(user_id)
+    return {"rooms": rooms, "total": len(rooms)}
+
+
 @router.get("/{room_id}")
-async def get_room(
-    room_id: str,
-    current_user: dict = Depends(get_current_user)
-):
-    """
-    Get room details by ID
-    """
+async def get_room(room_id: str, current_user: dict = Depends(get_current_user)):
+    """Get a specific room by ID."""
     user_id = current_user.get('localId') or current_user.get('user_id')
     room = await room_upload_service.get_room(room_id, user_id)
     
@@ -71,11 +77,3 @@ async def get_room(
         )
     
     return room
-
-
-@router.get("/user/rooms")
-async def get_user_rooms(current_user: dict = Depends(get_current_user)):
-    """Get all rooms for the current user."""
-    user_id = current_user.get('localId') or current_user.get('user_id')
-    rooms = await room_upload_service.get_user_rooms(user_id)
-    return {"rooms": rooms, "total": len(rooms)}

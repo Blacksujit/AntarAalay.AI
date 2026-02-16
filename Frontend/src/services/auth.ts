@@ -3,7 +3,8 @@
  * 
  * Handles Firebase authentication with Google Sign-In.
  */
-import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
+import { initializeApp, getApps } from 'firebase/app';
+import type { FirebaseApp } from 'firebase/app';
 import type { User } from 'firebase/auth';
 import {
   getAuth,
@@ -12,12 +13,17 @@ import {
   signOut,
   onAuthStateChanged,
 } from 'firebase/auth';
+import { logger } from '../utils/logger';
 
 // Firebase configuration
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || '',
-  authDomain: `${import.meta.env.VITE_FIREBASE_PROJECT_ID || ''}.firebaseapp.com`,
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyANQciKqx_Cyi92ahSVaLy_MewUDkZY3fg",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "antaraalayai.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "antaraalayai",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "antaraalayai.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "656663048044",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:656663048044:web:802e1ef31aaf30eb2a0d49",
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-07QNHQGWJ0"
 };
 
 // Initialize Firebase (singleton)
@@ -61,7 +67,7 @@ class AuthService {
       
       return this.currentUser;
     } catch (error) {
-      console.error('Google sign-in error:', error);
+      logger.error('Google sign-in error', { error }, error as Error);
       throw new Error('Failed to sign in with Google');
     }
   }
@@ -72,7 +78,7 @@ class AuthService {
       this.currentUser = null;
       localStorage.removeItem('auth_token');
     } catch (error) {
-      console.error('Sign out error:', error);
+      logger.error('Sign out error', { error }, error as Error);
       throw new Error('Failed to sign out');
     }
   }

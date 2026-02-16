@@ -1,4 +1,5 @@
 import api from './api';
+import { logger } from '../utils/logger';
 
 export interface VastuAnalyzeRequest {
   direction: string;
@@ -26,13 +27,24 @@ export interface VastuDirectionInfo {
 }
 
 export const analyzeVastu = async (data: VastuAnalyzeRequest): Promise<VastuAnalyzeResponse> => {
-  const response = await api.post('/api/vastu/analyze', data);
-  return response.data;
+  try {
+    const response = await api.post('/api/vastu/analyze', data);
+    logger.info('Vastu analysis successful', { direction: data.direction, roomType: data.room_type });
+    return response.data;
+  } catch (error) {
+    logger.error('Vastu analysis failed', { direction: data.direction, roomType: data.room_type }, error as Error);
+    throw error;
+  }
 };
 
-export const getDirectionInfo = async (direction: string): Promise<VastuDirectionInfo> => {
-  const response = await api.get(`/api/vastu/direction/${direction}`);
-  return response.data;
+export const getVastuDirectionInfo = async (direction: string): Promise<VastuDirectionInfo> => {
+  try {
+    const response = await api.get(`/api/vastu/direction/${direction}`);
+    return response.data;
+  } catch (error) {
+    logger.error('Get vastu direction info failed', { direction }, error as Error);
+    throw error;
+  }
 };
 
 export const getVastuScore = async (direction: string, roomType: string): Promise<{
@@ -42,8 +54,13 @@ export const getVastuScore = async (direction: string, roomType: string): Promis
   rating: string;
   element: string;
 }> => {
-  const response = await api.get(`/api/vastu/score/${direction}/${roomType}`);
-  return response.data;
+  try {
+    const response = await api.get(`/api/vastu/score/${direction}/${roomType}`);
+    return response.data;
+  } catch (error) {
+    logger.error('Get vastu score failed', { direction, roomType }, error as Error);
+    throw error;
+  }
 };
 
 export const getVastuRemedies = async (direction: string, roomType: string): Promise<{

@@ -1,48 +1,83 @@
 import api from './api';
+import { logger } from '../utils/logger';
 
 export interface UploadRoomRequest {
-  file: File;
-  roomType?: string;
-  direction?: string;
+  north: File;
+  south: File;
+  east: File;
+  west: File;
 }
 
 export interface UploadRoomResponse {
   room_id: string;
-  image_url: string;
-  message: string;
+  images: {
+    north: string;
+    south: string;
+    east: string;
+    west: string;
+  };
+  status: string;
 }
 
 export interface Room {
-  id: string;
+  room_id: string;
   user_id: string;
-  image_url: string;
+  images: {
+    north: string;
+    south: string;
+    east: string;
+    west: string;
+  };
   room_type?: string;
   direction?: string;
   created_at: string;
 }
 
-export const uploadRoom = async (data: UploadRoomRequest): Promise<UploadRoomResponse> => {
-  const formData = new FormData();
-  formData.append('file', data.file);
-  if (data.roomType) formData.append('room_type', data.roomType);
-  if (data.direction) formData.append('direction', data.direction);
+export const uploadRoom = async (data: UploadRoomRequest | FormData): Promise<UploadRoomResponse> => {
+  try {
+    let formData: FormData;
+    
+    if (data instanceof FormData) {
+      formData = data;
+    } else {
+      formData = new FormData();
+      formData.append('north', data.north);
+      formData.append('south', data.south);
+      formData.append('east', data.east);
+      formData.append('west', data.west);
+    }
 
-  const response = await api.post('/api/room/upload', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
-  return response.data;
+    const response = await api.post('/api/room/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    logger.info('Room upload successful', { roomId: response.data.room_id });
+    return response.data;
+  } catch (error) {
+    logger.error('Room upload failed', {}, error as Error);
+    throw error;
+  }
 };
 
 export const getRoom = async (roomId: string): Promise<Room> => {
-  const response = await api.get(`/api/room/${roomId}`);
-  return response.data;
+  try {
+    const response = await api.get(`/api/room/${roomId}`);
+    return response.data;
+  } catch (error) {
+    logger.error('Get room failed', { roomId }, error as Error);
+    throw error;
+  }
 };
 
 export const getUserRooms = async (): Promise<{ rooms: Room[]; total: number }> => {
-  const response = await api.get('/api/room/user/rooms');
-  return response.data;
+  try {
+    const response = await api.get('/api/room/user/rooms');
+    return response.data;
+  } catch (error) {
+    logger.error('Get user rooms failed', {}, error as Error);
+    throw error;
+  }
 };
 
 export const validateImageFile = (file: File): { valid: boolean; error?: string } => {

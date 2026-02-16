@@ -2,12 +2,14 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { useAuthStore } from './store/authStore';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 // Pages
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Upload from './pages/Upload';
+import Customize from './pages/Customize';
 import Designs from './pages/Designs';
 import Vastu from './pages/Vastu';
 
@@ -17,17 +19,18 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 5 * 60 * 1000,
       retry: 1,
+      refetchOnWindowFocus: false,
     },
   },
 });
 
 // Auth initializer component
 function AuthInitializer({ children }: { children: React.ReactNode }) {
-  const { initializeAuth } = useAuthStore();
+  const initializeAuth = useAuthStore((state) => state.initializeAuth);
 
   useEffect(() => {
     initializeAuth();
-  }, [initializeAuth]);
+  }, []); // Empty dependency array - only run once on mount
 
   return <>{children}</>;
 }
@@ -58,15 +61,15 @@ function App() {
         <Router>
           <Routes>
             {/* Public routes */}
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
+            <Route path="/" element={<ErrorBoundary><Home /></ErrorBoundary>} />
+            <Route path="/login" element={<ErrorBoundary><Login /></ErrorBoundary>} />
 
             {/* Protected routes */}
             <Route
               path="/dashboard"
               element={
                 <ProtectedRoute>
-                  <Dashboard />
+                  <ErrorBoundary><Dashboard /></ErrorBoundary>
                 </ProtectedRoute>
               }
             />
@@ -74,7 +77,15 @@ function App() {
               path="/upload"
               element={
                 <ProtectedRoute>
-                  <Upload />
+                  <ErrorBoundary><Upload /></ErrorBoundary>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/customize/:roomId"
+              element={
+                <ProtectedRoute>
+                  <ErrorBoundary><Customize /></ErrorBoundary>
                 </ProtectedRoute>
               }
             />
@@ -82,7 +93,7 @@ function App() {
               path="/designs/:roomId"
               element={
                 <ProtectedRoute>
-                  <Designs />
+                  <ErrorBoundary><Designs /></ErrorBoundary>
                 </ProtectedRoute>
               }
             />
@@ -90,7 +101,7 @@ function App() {
               path="/vastu"
               element={
                 <ProtectedRoute>
-                  <Vastu />
+                  <ErrorBoundary><Vastu /></ErrorBoundary>
                 </ProtectedRoute>
               }
             />

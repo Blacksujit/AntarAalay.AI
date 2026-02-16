@@ -3,6 +3,13 @@ from typing import Optional, List, Dict
 from datetime import datetime
 
 
+class DesignCustomizationRequest(BaseModel):
+    wall_color: Optional[str] = None
+    flooring: Optional[str] = None
+    furniture_style: Optional[str] = None
+    style: Optional[str] = None
+
+
 class DesignGenerateRequest(BaseModel):
     room_id: str
     style: str

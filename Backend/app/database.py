@@ -8,7 +8,7 @@ Dependencies: Module 1 (Configuration)
 """
 from typing import Generator, Optional, Dict, Any
 from contextlib import contextmanager
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, event, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
@@ -45,11 +45,17 @@ class DatabaseManager:
     def _initialize(self) -> None:
         """Create the database engine and session factory."""
         try:
+            # Force SQLite for local development
+            database_url = self.settings.DATABASE_URL
+            if "postgresql" in database_url and self.settings.ENVIRONMENT != "production":
+                database_url = "sqlite:///./antaralay.db"
+                logger.info("Forcing SQLite for local development")
+            
             # Build connection arguments for SSL if needed
             connect_args: Dict[str, Any] = {}
             
             # For cloud Postgres (Render, Supabase, etc.), use SSL
-            if self.settings.ENVIRONMENT == "production" or "render.com" in self.settings.DATABASE_URL:
+            if self.settings.ENVIRONMENT == "production" or ("render.com" in database_url and "postgresql" in database_url):
                 # Create SSL context for cloud providers
                 ssl_context = ssl.create_default_context()
                 ssl_context.check_hostname = False
@@ -57,8 +63,12 @@ class DatabaseManager:
                 connect_args["sslmode"] = "require"
                 connect_args["sslrootcert"] = None
             
+            # SQLite specific: check_same_thread=False
+            if "sqlite" in database_url:
+                connect_args["check_same_thread"] = False
+            
             self.engine = create_engine(
-                self.settings.DATABASE_URL,
+                database_url,
                 poolclass=QueuePool,
                 pool_size=5,
                 max_overflow=10,
@@ -143,6 +153,8 @@ class DatabaseManager:
         """Close all database connections and dispose of the engine."""
         if self.engine:
             self.engine.dispose()
+            self.engine = None
+            self.SessionLocal = None
             logger.info("Database connections closed")
     
     def ping(self) -> bool:
@@ -157,7 +169,7 @@ class DatabaseManager:
         
         try:
             with self.engine.connect() as conn:
-                conn.execute("SELECT 1")
+                conn.execute(text("SELECT 1"))
             return True
         except Exception as e:
             logger.error(f"Database ping failed: {e}")

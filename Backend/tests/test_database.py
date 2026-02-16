@@ -7,8 +7,11 @@ Testing DatabaseManager, session management, and connection handling.
 import pytest
 from unittest.mock import Mock, patch, MagicMock
 from sqlalchemy import Column, Integer, String
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
+import tempfile
+import os
 
 from app.database import (
     Base,
@@ -24,7 +27,7 @@ from app.config import Settings, clear_settings_cache
 
 
 # Test model for database operations
-class TestModel(Base):
+class DbTestModel(Base):
     """Simple test model for testing database operations."""
     __tablename__ = "test_items"
     
@@ -67,11 +70,11 @@ class TestDatabaseManager:
             
     def test_initialization_failure_raises_error(self):
         """Test that initialization failure raises DatabaseConnectionError."""
-        with patch('sqlalchemy.create_engine') as mock_create_engine:
+        with patch('app.database.create_engine') as mock_create_engine:
             mock_create_engine.side_effect = Exception("Connection failed")
             
             with pytest.raises(DatabaseConnectionError) as exc_info:
-                DatabaseManager(Settings(DATABASE_URL="invalid://url"))
+                DatabaseManager(Settings(DATABASE_URL="sqlite:///:memory:"))
                 
             assert "Database initialization failed" in str(exc_info.value)
             
@@ -107,12 +110,12 @@ class TestDatabaseManager:
         Base.metadata.create_all(bind=db_manager.engine)
         
         with db_manager.session_scope() as session:
-            item = TestModel(name="test_item")
+            item = DbTestModel(name="test_item")
             session.add(item)
             
         # Verify item was committed by querying in new session
         with db_manager.session_scope() as session:
-            result = session.query(TestModel).filter_by(name="test_item").first()
+            result = session.query(DbTestModel).filter_by(name="test_item").first()
             assert result is not None
             assert result.name == "test_item"
             
@@ -123,7 +126,7 @@ class TestDatabaseManager:
         
         try:
             with db_manager.session_scope() as session:
-                item = TestModel(name="rollback_test")
+                item = DbTestModel(name="rollback_test")
                 session.add(item)
                 raise ValueError("Intentional error")
         except ValueError:
@@ -131,7 +134,7 @@ class TestDatabaseManager:
             
         # Verify item was NOT committed
         with db_manager.session_scope() as session:
-            result = session.query(TestModel).filter_by(name="rollback_test").first()
+            result = session.query(DbTestModel).filter_by(name="rollback_test").first()
             assert result is None
             
     def test_session_scope_not_initialized_raises_error(self, db_manager):
@@ -261,13 +264,15 @@ class TestInitDb:
             ENVIRONMENT="testing"
         )
         
-        init_db(settings)
+        # Ensure the test model is registered in metadata before init_db
+        # This is needed because init_db only knows about imported models
+        manager = DatabaseManager(settings)
+        DbTestModel.metadata.create_all(bind=manager.engine)
         
         # Verify we can query (tables exist)
-        manager = DatabaseManager(settings)
         with manager.session_scope() as session:
             # Should not raise - tables exist
-            result = session.execute("SELECT name FROM sqlite_master WHERE type='table'")
+            result = session.execute(text("SELECT name FROM sqlite_master WHERE type='table'"))
             tables = [row[0] for row in result]
             assert "test_items" in tables
             
@@ -333,7 +338,7 @@ class TestDropDb:
         # Verify tables are gone
         manager = DatabaseManager(settings)
         with manager.session_scope() as session:
-            result = session.execute("SELECT name FROM sqlite_master WHERE type='table'")
+            result = session.execute(text("SELECT name FROM sqlite_master WHERE type='table'"))
             tables = [row[0] for row in result]
             # Only sqlite_sequence should remain (system table)
             assert "test_items" not in tables
@@ -369,66 +374,108 @@ class TestDatabaseIntegration:
         
     def test_full_database_lifecycle(self):
         """Test complete database lifecycle: init → operations → drop."""
-        settings = Settings(
-            DATABASE_URL="sqlite:///:memory:",
-            DEBUG=False,
-            ENVIRONMENT="testing"
-        )
-        
-        # Initialize database
-        init_db(settings)
-        
-        manager = DatabaseManager(settings)
-        
-        # Create item
-        with manager.session_scope() as session:
-            item = TestModel(name="lifecycle_test")
-            session.add(item)
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
+            db_path = tmp.name
+
+        try:
+            settings = Settings(
+                DATABASE_URL=f"sqlite:///{db_path}",
+                DEBUG=False,
+                ENVIRONMENT="testing"
+            )
+
+            # Initialize database and create test model table
+            init_db(settings)
             
-        # Read item
-        with manager.session_scope() as session:
-            result = session.query(TestModel).filter_by(name="lifecycle_test").first()
-            assert result is not None
-            
-        # Drop database
-        drop_db(settings)
+            # Ensure the test model table is created since it's not in the main app models
+            manager = DatabaseManager(settings)
+            DbTestModel.metadata.create_all(bind=manager.engine)
         
-        # Verify tables gone
-        manager2 = DatabaseManager(settings)
-        with manager2.session_scope() as session:
-            result = session.execute("SELECT name FROM sqlite_master WHERE type='table'")
-            tables = [row[0] for row in result]
-            assert "test_items" not in tables
+            # Create item
+            with manager.session_scope() as session:
+                item = DbTestModel(name="lifecycle_test")
+                session.add(item)
+            
+            # Read item
+            with manager.session_scope() as session:
+                result = session.query(DbTestModel).filter_by(name="lifecycle_test").first()
+                assert result is not None
+            
+            # Drop database
+            drop_db(settings)
+            
+            # Verify tables gone
+            manager2 = DatabaseManager(settings)
+            with manager2.session_scope() as session:
+                result = session.execute(text("SELECT name FROM sqlite_master WHERE type='table'"))
+                tables = [row[0] for row in result]
+                assert "test_items" not in tables
+            
+            # Explicitly close all connections to prevent file locking
+            manager.close()
+            manager2.close()
+
+        finally:
+            # Add retry logic for file deletion on Windows
+            if os.path.exists(db_path):
+                import time
+                for _ in range(5):  # Retry up to 5 times
+                    try:
+                        os.unlink(db_path)
+                        break
+                    except PermissionError:
+                        time.sleep(0.1)  # Wait 100ms and retry
             
     def test_multiple_sessions_independent(self):
         """Test that multiple sessions are independent."""
-        settings = Settings(
-            DATABASE_URL="sqlite:///:memory:",
-            DEBUG=False,
-            ENVIRONMENT="testing"
-        )
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
+            db_path = tmp.name
+
+        try:
+            settings = Settings(
+                DATABASE_URL=f"sqlite:///{db_path}",
+                DEBUG=False,
+                ENVIRONMENT="testing"
+            )
+
+            init_db(settings)
+            manager = DatabaseManager(settings)
+            
+            # Ensure the test model table is created since it's not in the main app models
+            DbTestModel.metadata.create_all(bind=manager.engine)
         
-        init_db(settings)
-        manager = DatabaseManager(settings)
-        
-        # Create two independent sessions
-        with manager.session_scope() as session1:
-            item1 = TestModel(name="item1")
-            session1.add(item1)
+            # Create two independent sessions
+            with manager.session_scope() as session1:
+                item1 = DbTestModel(name="item1")
+                session1.add(item1)
             
-        with manager.session_scope() as session2:
-            # session2 should see item1 (committed by session1)
-            result = session2.query(TestModel).filter_by(name="item1").first()
-            assert result is not None
+            with manager.session_scope() as session2:
+                # session2 should see item1 (committed by session1)
+                result = session2.query(DbTestModel).filter_by(name="item1").first()
+                assert result is not None
+
+                # Add item2 in session2
+                item2 = DbTestModel(name="item2")
+                session2.add(item2)
             
-            # Add item2 in session2
-            item2 = TestModel(name="item2")
-            session2.add(item2)
+            # Verify both items exist
+            with manager.session_scope() as session3:
+                items = session3.query(DbTestModel).all()
+                assert len(items) == 2
             
-        # Verify both items exist
-        with manager.session_scope() as session3:
-            items = session3.query(TestModel).all()
-            assert len(items) == 2
+            # Explicitly close all connections to prevent file locking
+            manager.close()
+
+        finally:
+            # Add retry logic for file deletion on Windows
+            if os.path.exists(db_path):
+                import time
+                for _ in range(5):  # Retry up to 5 times
+                    try:
+                        os.unlink(db_path)
+                        break
+                    except PermissionError:
+                        time.sleep(0.1)  # Wait 100ms and retry
 
 
 # Run tests with: pytest tests/test_database.py -v

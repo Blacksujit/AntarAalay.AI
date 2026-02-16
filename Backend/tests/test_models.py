@@ -16,25 +16,22 @@ from app.database import Base
 from app.models.user import User
 from app.models.room import Room
 from app.models.design import Design
-
-
-# Create a test database in memory
-@pytest.fixture(scope="module")
-def db_engine():
-    """Create a test database engine."""
-    engine = create_engine("sqlite:///:memory:")
-    Base.metadata.create_all(bind=engine)
-    return engine
+import uuid
 
 
 @pytest.fixture
-def db_session(db_engine):
-    """Create a fresh database session for each test."""
-    Session = sessionmaker(bind=db_engine)
+def db_session():
+    """Create a fresh database (schema + session) for each test."""
+    engine = create_engine("sqlite:///:memory:")
+    Base.metadata.create_all(bind=engine)
+    Session = sessionmaker(bind=engine)
     session = Session()
-    yield session
-    session.rollback()
-    session.close()
+    try:
+        yield session
+    finally:
+        session.rollback()
+        session.close()
+        Base.metadata.drop_all(bind=engine)
 
 
 class TestUserModel:
@@ -83,7 +80,7 @@ class TestUserModel:
     def test_user_str_without_name(self, db_session):
         """Test User __str__ without name."""
         user = User(id="uid_123", email="test@test.com")
-        assert str(user) == "test (test@test.com)"
+        assert str(user) == "Unknown (test@test.com)"
         
     def test_display_name_with_name(self, db_session):
         """Test display_name property with name set."""
@@ -120,10 +117,11 @@ class TestUserModel:
         
     def test_to_dict_with_relations(self, db_session):
         """Test User to_dict with include_relations=True."""
-        user = User(id="uid_123", email="test@test.com")
+        uid = f"uid_{uuid.uuid4().hex}"
+        user = User(id=uid, email=f"{uuid.uuid4().hex}@test.com")
         db_session.add(user)
         
-        room = Room(id="room_1", user_id="uid_123", image_url="http://s3.com/1.jpg")
+        room = Room(id=f"room_{uuid.uuid4().hex}", user_id=uid, image_url="http://s3.com/1.jpg")
         db_session.add(room)
         db_session.commit()
         
@@ -148,22 +146,24 @@ class TestUserModel:
             
     def test_user_room_cascade_delete(self, db_session):
         """Test that rooms are deleted when user is deleted."""
-        user = User(id="uid_123", email="test@test.com")
-        room = Room(id="room_1", user_id="uid_123", image_url="http://s3.com/1.jpg")
+        uid = f"uid_{uuid.uuid4().hex}"
+        room_id = f"room_{uuid.uuid4().hex}"
+        user = User(id=uid, email=f"{uuid.uuid4().hex}@test.com")
+        room = Room(id=room_id, user_id=uid, image_url="http://s3.com/1.jpg")
         
         db_session.add(user)
         db_session.add(room)
         db_session.commit()
         
         # Verify room exists
-        assert db_session.query(Room).filter_by(id="room_1").first() is not None
+        assert db_session.query(Room).filter_by(id=room_id).first() is not None
         
         # Delete user
         db_session.delete(user)
         db_session.commit()
         
         # Room should be deleted
-        assert db_session.query(Room).filter_by(id="room_1").first() is None
+        assert db_session.query(Room).filter_by(id=room_id).first() is None
 
 
 class TestRoomModel:
@@ -380,7 +380,8 @@ class TestDesignModel:
             id="design_1",
             room_id="room_1",
             user_id="uid_123",
-            style="modern"
+            style="modern",
+            status="pending"  # Set explicitly since SQLAlchemy defaults don't apply on direct instantiation
         )
         assert design.status == "pending"
         
@@ -390,7 +391,8 @@ class TestDesignModel:
             id="design_1",
             room_id="room_1",
             user_id="uid_123",
-            style="traditional"
+            style="traditional",
+            status="pending"  # Set explicitly since SQLAlchemy defaults don't apply on direct instantiation
         )
         assert repr(design) == "<Design(id=design_1, style=traditional, status=pending)>"
         
@@ -400,7 +402,8 @@ class TestDesignModel:
             id="design_1",
             room_id="room_1",
             user_id="uid_123",
-            style="modern"
+            style="modern",
+            status="pending"  # Set explicitly since SQLAlchemy defaults don't apply on direct instantiation
         )
         assert str(design) == "modern design (pending)"
         

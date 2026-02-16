@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../store/authStore';
@@ -8,17 +8,43 @@ import { Plus, Image, Sparkles, ChevronRight, LogOut } from 'lucide-react';
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
+  const [authFailed, setAuthFailed] = useState(false);
 
+  // Only redirect if user was previously logged in and now is null
+  const hasCheckedAuth = useRef(false);
+  
   useEffect(() => {
-    if (!user) {
+    if (!hasCheckedAuth.current && !user) {
+      hasCheckedAuth.current = true;
       navigate('/login');
     }
   }, [user, navigate]);
 
+  // Redirect to login when auth fails (401)
+  useEffect(() => {
+    if (authFailed) {
+      navigate('/login');
+    }
+  }, [authFailed, navigate]);
+
   const { data: roomsData, isLoading } = useQuery({
     queryKey: ['userRooms'],
     queryFn: getUserRooms,
-    enabled: !!user,
+    enabled: !!user && !authFailed,
+    retry: 0,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    meta: {
+      onError: (error: any) => {
+        if (error?.response?.status === 401) {
+          setAuthFailed(true);
+          // Clear auth state on 401
+          localStorage.removeItem('auth_token');
+          // Redirect to login
+          window.location.href = '/login';
+        }
+      },
+    },
   });
 
   const handleLogout = async () => {
@@ -133,12 +159,12 @@ export default function Dashboard() {
             <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-6">
               {recentRooms.map((room) => (
                 <Link
-                  key={room.id}
-                  to={`/designs/${room.id}`}
+                  key={room.room_id}
+                  to={`/designs/${room.room_id}`}
                   className="group relative aspect-square bg-white/80 rounded-2xl overflow-hidden border border-amber-100 shadow-sm hover:shadow-lg transition-all"
                 >
                   <img
-                    src={room.image_url}
+                    src={room.images?.north}
                     alt="Room"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />

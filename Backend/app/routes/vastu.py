@@ -6,7 +6,7 @@ from app.dependencies import get_current_user, get_current_user_optional
 from app.schemas.vastu import VastuAnalyzeRequest, VastuAnalyzeResponse, VastuDirectionInfo
 from app.services.vastu_engine import get_vastu_engine
 
-router = APIRouter(prefix="/api/vastu", tags=["vastu"])
+router = APIRouter(prefix="/vastu", tags=["vastu"])
 
 
 @router.post("/analyze", response_model=VastuAnalyzeResponse)

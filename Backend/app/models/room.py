@@ -107,7 +107,7 @@ class Room(Base):
     @property
     def design_count(self) -> int:
         """Return number of designs generated for this room."""
-        return len(self.designs) if self.designs else 0
+        return list(self.designs).__len__() if self.designs else 0
     
     @property
     def has_vastu_data(self) -> bool:

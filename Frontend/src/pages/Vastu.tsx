@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { analyzeVastu, getVastuRemedies, roomTypes, directions, getDirectionColor, getElementIcon } from '../services/vastu';
+import { analyzeVastu, getVastuRemedies, roomTypes, directions, getElementIcon } from '../services/vastu';
 import { Sparkles, Compass, AlertTriangle, CheckCircle, Lightbulb, ArrowRight } from 'lucide-react';
 
 export default function Vastu() {
@@ -9,12 +9,10 @@ export default function Vastu() {
 
   const analyzeMutation = useMutation({
     mutationFn: () => analyzeVastu({ direction: selectedDirection, room_type: selectedRoom }),
-    enabled: selectedRoom && selectedDirection,
   });
 
   const remediesMutation = useMutation({
     mutationFn: () => getVastuRemedies(selectedDirection, selectedRoom),
-    enabled: selectedRoom && selectedDirection,
   });
 
   const handleAnalyze = () => {

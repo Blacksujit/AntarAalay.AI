@@ -53,9 +53,10 @@ describe('UploadService', () => {
 
       const file = new File(['test'], 'room.jpg', { type: 'image/jpeg' });
       const result = await uploadRoom({
-        file,
-        roomType: 'bedroom',
-        direction: 'north'
+        north: file,
+        south: file,
+        east: file,
+        west: file,
       });
 
       expect(api.post).toHaveBeenCalledWith(

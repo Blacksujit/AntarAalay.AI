@@ -1,5 +1,6 @@
 import axios, { AxiosError } from 'axios';
 import type { AxiosInstance } from 'axios';
+import { logger } from '../utils/logger';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -31,8 +32,9 @@ class ApiService {
       (response) => response,
       (error: AxiosError) => {
         if (error.response?.status === 401) {
-          localStorage.removeItem('auth_token');
-          window.location.href = '/login';
+          logger.warn('API 401 unauthorized', { url: error.config?.url });
+          // Don't clear token here - let components handle cleanup
+          // This prevents race conditions with auth state
         }
         return Promise.reject(error);
       }

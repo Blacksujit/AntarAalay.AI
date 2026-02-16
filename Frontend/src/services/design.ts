@@ -1,4 +1,5 @@
 import api from './api';
+import { logger } from '../utils/logger';
 
 export interface GenerateDesignRequest {
   room_id: string;
@@ -49,18 +50,34 @@ export interface DesignWithDetails {
 }
 
 export const generateDesign = async (data: GenerateDesignRequest): Promise<GenerateDesignResponse> => {
-  const response = await api.post('/api/design/generate', data);
-  return response.data;
+  try {
+    const response = await api.post('/api/design/generate', data);
+    logger.info('Design generation successful', { roomId: data.room_id, style: data.style });
+    return response.data;
+  } catch (error) {
+    logger.error('Design generation failed', { roomId: data.room_id }, error as Error);
+    throw error;
+  }
 };
 
 export const getDesign = async (designId: string): Promise<Design> => {
-  const response = await api.get(`/api/design/${designId}`);
-  return response.data;
+  try {
+    const response = await api.get(`/api/design/${designId}`);
+    return response.data;
+  } catch (error) {
+    logger.error('Get design failed', { designId }, error as Error);
+    throw error;
+  }
 };
 
 export const getRoomDesigns = async (roomId: string): Promise<{ designs: Design[]; total: number }> => {
-  const response = await api.get(`/api/design/room/${roomId}`);
-  return response.data;
+  try {
+    const response = await api.get(`/api/design/room/${roomId}`);
+    return response.data;
+  } catch (error) {
+    logger.error('Get room designs failed', { roomId }, error as Error);
+    throw error;
+  }
 };
 
 export const getRoomDesignsWithDetails = async (roomId: string): Promise<{
@@ -73,12 +90,37 @@ export const getRoomDesignsWithDetails = async (roomId: string): Promise<{
     direction?: string;
   };
 }> => {
-  const response = await api.get(`/api/design/room/${roomId}/with-details`);
-  return response.data;
+  try {
+    const response = await api.get(`/api/design/room/${roomId}/with-details`);
+    return response.data;
+  } catch (error) {
+    logger.error('Get room designs with details failed', { roomId }, error as Error);
+    throw error;
+  }
+};
+
+export interface CustomizationOptions {
+  wall_color?: string;
+  flooring?: string;
+  furniture_style?: string;
+  style?: string;
+}
+
+export const regenerateDesign = async (
+  designId: string,
+  customization: CustomizationOptions
+): Promise<Design> => {
+  try {
+    const response = await api.post(`/api/design/${designId}/regenerate`, customization);
+    logger.info('Design regeneration successful', { designId, customization });
+    return response.data;
+  } catch (error) {
+    logger.error('Design regeneration failed', { designId }, error as Error);
+    throw error;
+  }
 };
 
 export const designStyles = [
-  { value: 'modern', label: 'Modern', description: 'Clean lines and contemporary aesthetics' },
   { value: 'traditional', label: 'Traditional Indian', description: 'Rich colors and ethnic patterns' },
   { value: 'minimalist', label: 'Minimalist', description: 'Simple, uncluttered spaces' },
   { value: 'luxury', label: 'Luxury', description: 'Premium materials and elegant designs' },

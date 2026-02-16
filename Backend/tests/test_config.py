@@ -24,7 +24,9 @@ class TestSettings:
     
     def test_default_settings(self):
         """Test that settings have sensible defaults."""
-        settings = Settings()
+        # Ignore any local .env / env var overrides when checking code defaults
+        with patch.dict(os.environ, {}, clear=True):
+            settings = Settings(_env_file=None)
         
         assert settings.APP_NAME == "AntarAalay.ai"
         assert settings.APP_VERSION == "1.0.0"
@@ -37,19 +39,19 @@ class TestSettings:
         """Test default allowed image types."""
         settings = Settings()
         
-        assert "image/jpeg" in settings.ALLOWED_IMAGE_TYPES
-        assert "image/png" in settings.ALLOWED_IMAGE_TYPES
-        assert "image/webp" in settings.ALLOWED_IMAGE_TYPES
-        assert len(settings.ALLOWED_IMAGE_TYPES) == 3
+        assert "image/jpeg" in settings.allowed_image_types_list
+        assert "image/png" in settings.allowed_image_types_list
+        assert "image/webp" in settings.allowed_image_types_list
+        assert len(settings.allowed_image_types_list) == 3
         
     def test_allowed_image_types_from_string(self):
         """Test parsing comma-separated image types from env string."""
         # Simulate env var as string
         with patch.dict(os.environ, {"ALLOWED_IMAGE_TYPES": "image/jpeg, image/png, image/gif"}):
             settings = Settings()
-            assert "image/jpeg" in settings.ALLOWED_IMAGE_TYPES
-            assert "image/png" in settings.ALLOWED_IMAGE_TYPES
-            assert "image/gif" in settings.ALLOWED_IMAGE_TYPES
+            assert "image/jpeg" in settings.allowed_image_types_list
+            assert "image/png" in settings.allowed_image_types_list
+            assert "image/gif" in settings.allowed_image_types_list
             
     def test_max_upload_size_validation_too_small(self):
         """Test that upload size < 1KB raises validation error."""
@@ -182,6 +184,7 @@ class TestValidateProductionConfig:
             DATABASE_URL="postgresql://user:pass@localhost/db",
             AWS_ACCESS_KEY_ID="key",
             AWS_SECRET_ACCESS_KEY="secret",
+            AWS_REGION="ap-south-1",
             S3_BUCKET_NAME="bucket",
             FIREBASE_PROJECT_ID="project"
         )
@@ -196,6 +199,7 @@ class TestValidateProductionConfig:
             DATABASE_URL="",
             AWS_ACCESS_KEY_ID="key",
             AWS_SECRET_ACCESS_KEY="secret",
+            AWS_REGION="ap-south-1",
             S3_BUCKET_NAME="bucket",
             FIREBASE_PROJECT_ID="project"
         )
@@ -213,6 +217,7 @@ class TestValidateProductionConfig:
             DATABASE_URL="postgresql://user:pass@localhost/db",
             AWS_ACCESS_KEY_ID="",
             AWS_SECRET_ACCESS_KEY="",
+            AWS_REGION="",
             S3_BUCKET_NAME="bucket",
             FIREBASE_PROJECT_ID="project"
         )
@@ -222,6 +227,7 @@ class TestValidateProductionConfig:
         
         assert "AWS_ACCESS_KEY_ID" in str(exc_info.value)
         assert "AWS_SECRET_ACCESS_KEY" in str(exc_info.value)
+        assert "AWS_REGION" in str(exc_info.value)
         
     def test_missing_multiple_vars(self):
         """Test error lists all missing variables."""
@@ -230,6 +236,7 @@ class TestValidateProductionConfig:
             DATABASE_URL="",
             AWS_ACCESS_KEY_ID="",
             AWS_SECRET_ACCESS_KEY="",
+            AWS_REGION="",
             S3_BUCKET_NAME="",
             FIREBASE_PROJECT_ID=""
         )
@@ -238,7 +245,7 @@ class TestValidateProductionConfig:
             validate_production_config(settings)
         
         missing = exc_info.value.missing_vars
-        assert len(missing) == 5
+        assert len(missing) == 6
         assert "DATABASE_URL" in missing
         assert "S3_BUCKET_NAME" in missing
         assert "FIREBASE_PROJECT_ID" in missing

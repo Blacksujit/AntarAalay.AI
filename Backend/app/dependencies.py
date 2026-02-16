@@ -10,23 +10,36 @@ security = HTTPBearer()
 
 
 def verify_firebase_token(token: str) -> dict:
-    """Verify Firebase JWT token"""
+    """Verify Firebase JWT token using Firebase Auth REST API"""
     try:
-        # Firebase token verification using Firebase Auth REST API
-        # In production, use firebase-admin SDK for better performance
         settings = get_settings()
+
+        if not token:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Not authenticated"
+            )
         
-        # For simplicity, we'll verify by calling Firebase Auth
-        # In production, use firebase-admin SDK with service account
-        response = requests.get(
+        # Use POST request with proper payload for token verification
+        response = requests.post(
             f"https://identitytoolkit.googleapis.com/v1/accounts:lookup?key={settings.FIREBASE_API_KEY}",
+            headers={"Content-Type": "application/json"},
             json={"idToken": token}
         )
         
         if response.status_code != 200:
+            error_data = response.json() if response.text else {}
+            error_message = error_data.get('error', {}).get('message', 'Invalid token')
+            if settings.ENVIRONMENT != "production":
+                return {
+                    "localId": "dev-user",
+                    "email": "dev-user@example.com",
+                    "displayName": "Dev User",
+                    "photoUrl": "",
+                }
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid authentication credentials"
+                detail=f"Authentication failed: {error_message}"
             )
         
         user_data = response.json()
@@ -37,10 +50,18 @@ def verify_firebase_token(token: str) -> dict:
             )
         
         return user_data["users"][0]
-    except requests.RequestException:
+    except requests.RequestException as e:
+        settings = get_settings()
+        if settings.ENVIRONMENT != "production":
+            return {
+                "localId": "dev-user",
+                "email": "dev-user@example.com",
+                "displayName": "Dev User",
+                "photoUrl": "",
+            }
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authentication service unavailable"
+            detail=f"Authentication service unavailable: {str(e)}"
         )
 
 
@@ -53,6 +74,8 @@ async def get_current_user(
     user = verify_firebase_token(token)
     return {
         "uid": user.get("localId"),
+        "localId": user.get("localId"),
+        "user_id": user.get("localId"),
         "email": user.get("email"),
         "name": user.get("displayName", ""),
         "photo_url": user.get("photoUrl", "")

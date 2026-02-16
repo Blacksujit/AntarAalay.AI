@@ -78,12 +78,12 @@ class User(Base):
     @property
     def room_count(self) -> int:
         """Return number of rooms owned by user."""
-        return len(self.rooms) if self.rooms else 0
+        return list(self.rooms).__len__() if self.rooms else 0
     
     @property
     def design_count(self) -> int:
         """Return number of designs owned by user."""
-        return len(self.designs) if self.designs else 0
+        return list(self.designs).__len__() if self.designs else 0
     
     def to_dict(self, include_relations: bool = False) -> dict:
         """
