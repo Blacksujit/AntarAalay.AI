@@ -1,0 +1,20 @@
+# PyTorch with CUDA 11.8 for GTX 1650
+torch==2.1.0+cu118
+torchvision==0.16.0+cu118
+torchaudio==2.1.0+cu118
+--index-url https://download.pytorch.org/whl/cu118
+
+# Diffusers and AI libraries
+diffusers>=0.24.0
+transformers>=4.35.0
+accelerate>=0.24.0
+safetensors>=0.4.0
+
+# ControlNet and image processing
+controlnet-aux>=0.7.0
+opencv-python>=4.8.0
+Pillow>=10.0.0
+numpy>=1.24.0
+
+# Optional optimizations (if available)
+# xformers  # Comment out if installation fails

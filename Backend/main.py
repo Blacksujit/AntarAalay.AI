@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import Response
+from fastapi.responses import Response, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from app.database import get_db_manager, Base
 from app.routes import room, design, vastu
 from app.config import get_settings
@@ -30,10 +31,40 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Add security headers middleware
+@app.middleware("http")
+async def add_security_headers(request, call_next):
+    response = await call_next(request)
+    response.headers["Cross-Origin-Opener-Policy"] = "same-origin-allow-popups"
+    response.headers["Cross-Origin-Embedder-Policy"] = "unsafe-none"
+    return response
+
+# Add request logging middleware
+import time
+@app.middleware("http")
+async def log_requests(request, call_next):
+    start = time.time()
+    print(f"➡️  {request.method} {request.url.path}")
+    try:
+        response = await call_next(request)
+        duration = time.time() - start
+        print(f"⬅️  {request.method} {request.url.path} - {response.status_code} ({duration:.2f}s)")
+        return response
+    except Exception as e:
+        print(f"❌ {request.method} {request.url.path} - ERROR: {e}")
+        raise
+
 # Include routers
 app.include_router(room.router, prefix="/api")
 app.include_router(design.router, prefix="/api")
 app.include_router(vastu.router, prefix="/api")
+
+# Create uploads directory if it doesn't exist
+import os
+os.makedirs("uploads", exist_ok=True)
+
+# Mount static files for uploads
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 
 @app.get("/api/mock-storage/{bucket}/{path:path}")

@@ -1,8 +1,8 @@
 """
 Room Service for AntarAalay.ai
 
-Handles 4-directional image uploads to Firebase Storage
-and room metadata storage in Firestore.
+Handles 4-directional image uploads to local storage
+and room metadata storage in database.
 """
 import uuid
 from datetime import datetime
@@ -10,19 +10,18 @@ from typing import Dict, Optional, List
 from fastapi import UploadFile, HTTPException, status
 
 from app.config import get_settings
-from app.services.firebase_client import get_firestore, get_storage_bucket
+from app.services.storage import get_storage_service
 import logging
 
 logger = logging.getLogger(__name__)
 
 
 class RoomUploadService:
-    """Service for handling room image uploads with Firebase."""
+    """Service for handling room image uploads with local storage."""
     
     def __init__(self):
         self.settings = get_settings()
-        self.firestore = get_firestore()
-        self.storage_bucket = get_storage_bucket()
+        self.storage_service = get_storage_service()
     
     async def _validate_and_read(self, file: UploadFile, direction: str) -> bytes:
         """Validate and read image file."""
@@ -65,30 +64,38 @@ class RoomUploadService:
             for direction, file in directions.items():
                 content = await self._validate_and_read(file, direction)
                 
-                # Upload to Firebase Storage
-                path = f"users/{user_id}/rooms/{room_id}/{direction}.jpg"
-                blob = self.storage_bucket.blob(path)
-                blob.upload_from_string(
+                # Upload to local storage
+                folder = f"users/{user_id}/rooms/{room_id}"
+                image_url = self.storage_service.upload_image(
                     content,
-                    content_type=file.content_type or "image/jpeg"
+                    file.content_type or "image/jpeg",
+                    folder
                 )
                 
-                # Make publicly accessible
-                blob.make_public()
-                images[direction] = blob.public_url
-                
-                logger.info(f"Uploaded {direction} image: {blob.public_url}")
+                images[direction] = image_url
+                logger.info(f"Uploaded {direction} image: {image_url}")
             
-            # Save to Firestore
-            self.firestore.collection('rooms').document(room_id).set({
-                'room_id': room_id,
-                'user_id': user_id,
-                'images': images,
-                'created_at': datetime.utcnow().isoformat(),
-                'updated_at': datetime.utcnow().isoformat()
-            })
+            # Save to database (using SQLite for now instead of Firestore)
+            from app.database import get_db_manager
             
-            logger.info(f"Room {room_id} saved to Firestore")
+            db_manager = get_db_manager()
+            with db_manager.session_scope() as session:
+                from app.models import Room
+                # Create 4 separate room records, one for each direction
+                for direction, image_url in images.items():
+                    room = Room(
+                        id=f"{room_id}_{direction}",  # Use 'id' field for primary key
+                        user_id=user_id,
+                        image_url=image_url,
+                        room_type="living",  # Default room type
+                        direction=direction,  # Store the direction
+                        created_at=datetime.utcnow(),
+                        updated_at=datetime.utcnow()
+                    )
+                    session.add(room)
+                session.commit()
+            
+            logger.info(f"Room {room_id} with 4 directions saved to database")
             
             return {
                 "room_id": room_id,
@@ -108,37 +115,85 @@ class RoomUploadService:
     async def get_room(self, room_id: str, user_id: str) -> Optional[Dict]:
         """Get room by ID with user verification."""
         try:
-            doc_ref = self.firestore.collection('rooms').document(room_id)
-            doc = doc_ref.get()
+            # Get from SQLite database instead of Firestore
+            from app.database import get_db_manager
             
-            if not doc.exists:
-                return None
-            
-            room_data = doc.to_dict()
-            
-            # Verify ownership
-            if room_data.get('user_id') != user_id:
-                return None
-            
-            return room_data
+            db_manager = get_db_manager()
+            with db_manager.session_scope() as session:
+                from app.models import Room
+                # Find all room records with this room_id base (could have multiple directions)
+                rooms = session.query(Room).filter(Room.id.like(f"{room_id}%")).all()
+                
+                if not rooms:
+                    return None
+                
+                # Group by direction
+                images = {}
+                for room in rooms:
+                    if room.direction:
+                        images[room.direction] = room.image_url
+                
+                return {
+                    'room_id': room_id,
+                    'user_id': user_id,
+                    'images': images,
+                    'created_at': rooms[0].created_at.isoformat() if rooms[0].created_at else None,
+                    'updated_at': rooms[0].updated_at.isoformat() if rooms[0].updated_at else None
+                }
             
         except Exception as e:
             logger.error(f"Error fetching room {room_id}: {e}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to fetch room"
+                detail=f"Failed to fetch room: {str(e)}"
             )
     
     async def get_user_rooms(self, user_id: str) -> List[Dict]:
         """Get all rooms for a user."""
         try:
-            docs = self.firestore.collection('rooms').where('user_id', '==', user_id).stream()
-            return [doc.to_dict() for doc in docs]
+            # Get from SQLite database instead of Firestore
+            from app.database import get_db_manager
+            
+            db_manager = get_db_manager()
+            with db_manager.session_scope() as session:
+                from app.models import Room
+                from sqlalchemy import func
+                
+                # Group rooms by base room_id (without direction suffix)
+                rooms = session.query(
+                    func.substr(Room.id, 1, 36).label('base_room_id'),
+                    Room.user_id,
+                    Room.created_at,
+                    Room.updated_at
+                ).filter(Room.user_id == user_id).group_by('base_room_id').all()
+                
+                result = []
+                for room in rooms:
+                    # Get all directions for this room
+                    direction_rooms = session.query(Room).filter(
+                        Room.id.like(f"{room.base_room_id}%")
+                    ).all()
+                    
+                    images = {}
+                    for dr in direction_rooms:
+                        if dr.direction:
+                            images[dr.direction] = dr.image_url
+                    
+                    result.append({
+                        'room_id': room.base_room_id,
+                        'user_id': room.user_id,
+                        'images': images,
+                        'created_at': room.created_at.isoformat() if room.created_at else None,
+                        'updated_at': room.updated_at.isoformat() if room.updated_at else None
+                    })
+                
+                return result
+                
         except Exception as e:
             logger.error(f"Error fetching rooms for user {user_id}: {e}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to fetch rooms"
+                detail=f"Failed to fetch user rooms: {str(e)}"
             )
 
 

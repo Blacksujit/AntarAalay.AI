@@ -47,6 +47,8 @@ class Design(Base):
     # Design Parameters
     style = Column(String(50), nullable=False, comment="Design style: modern, traditional, minimalist, etc.")
     budget = Column(Float, nullable=True, comment="User's budget constraint")
+    wall_color = Column(String(50), nullable=True, comment="Wall color preference")
+    flooring_material = Column(String(50), nullable=True, comment="Flooring material preference")
     
     # Generated Images (3 variations)
     image_1_url = Column(String(512), nullable=True, comment="First design variation URL")

@@ -1,0 +1,31 @@
+# Backend/.env - FREE State-of-the-Art Configuration
+DATABASE_URL=sqlite:///./antaralay.db
+ENVIRONMENT=development
+DEBUG=true
+FIREBASE_PROJECT_ID=antaraalayai
+FIREBASE_STORAGE_BUCKET=antaraalayai.firebasestorage.app
+ALLOWED_IMAGE_TYPES=image/jpeg,image/png,image/webp
+MAX_UPLOAD_SIZE=10485760
+STABLE_DIFFUSION_API_KEY=sk-6VtHw3kHqnvDsFonTqXwAAokuPKrky9JwG6v6zxDCOAdEKTA
+STABLE_DIFFUSION_API_URL=https://api.stability.ai/v2beta/stable-image/generate/ultra
+POLLINATION_AI_API_KEY=sk_lheBwBGbg0LYBY8DJIbNlLBXKozh0RB6
+REPLICATE_API_TOKEN=<YOUR_REPLICATE_API_TOKEN>
+HUGGINGFACE_TOKEN=<YOUR_HUGGINGFACE_TOKEN>
+FIREBASE_API_KEY=AIzaSyANQciKqx_Cyi92ahSVaLy_MewUDkZY3fg
+FIREBASE_API_KEY=AIzaSyANQciKqx_Cyi92ahSVaLy_MewUDkZY3fg
+FIREBASE_CREDENTIALS_PATH=antaraalayai-firebase-adminsdk-fbsvc-3af9a3cf2e.json
+
+# AI ENGINE CONFIGURATION - 100% FREE STATE OF THE ART
+AI_ENGINE=hf_inference
+HF_API_KEY=<YOUR_HUGGINGFACE_TOKEN>
+# No HF_ENDPOINT_URL needed - will auto-use SD 3.5 Large (FREE)
+MODEL_NAME=stabilityai/stable-diffusion-3.5-large
+
+# Rate Limiting
+FREE_DAILY_LIMIT=3
+GLOBAL_REQUESTS_PER_MINUTE=60
+
+# Generation Parameters
+MAX_RESOLUTION=1024,1024
+AI_TIMEOUT_SECONDS=60
+DETERMINISTIC_GENERATION=true

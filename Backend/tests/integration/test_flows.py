@@ -3,6 +3,14 @@ Phase 2: Integration Tests
 
 End-to-end tests for complete user flows.
 """
+import sys
+import os
+from pathlib import Path
+
+# Add backend directory to Python path
+backend_dir = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(backend_dir))
+
 import pytest
 from fastapi.testclient import TestClient
 from unittest.mock import Mock, patch

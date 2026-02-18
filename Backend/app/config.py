@@ -32,11 +32,15 @@ class Settings(BaseSettings):
     HOST: str = "0.0.0.0"
     PORT: int = 8000
     
+    # API Keys
+    MODELSLAB_API_KEY: Optional[str] = None
+    HUGGINGFACE_TOKEN: Optional[str] = None
+    
     # Database - SQLite for local dev
     DATABASE_URL: str = "sqlite:///./antaralay.db"
     
     # Firebase Configuration
-    FIREBASE_API_KEY: str = "AIzaSyANQciKqx_Cyi92ahSVaLy_MewUDkZY3fg"
+    FIREBASE_API_KEY: str = ""
     FIREBASE_AUTH_DOMAIN: str = "antaraalayai.firebaseapp.com"
     FIREBASE_PROJECT_ID: str = "antaraalayai"
     FIREBASE_STORAGE_BUCKET: str = "antaraalayai.firebasestorage.app"
@@ -48,9 +52,43 @@ class Settings(BaseSettings):
     
     # External APIs
     STABLE_DIFFUSION_API_KEY: str = ""
-    STABLE_DIFFUSION_API_URL: str = "https://api.stability.ai/v2beta/stable-image/generate/sd3"
-    STABLE_DIFFUSION_TIMEOUT: int = 60  # seconds
+    STABLE_DIFFUSION_API_URL: str = "https://api.stability.ai/v2beta/stable-image/generate/ultra"
+    STABLE_DIFFUSION_TIMEOUT: int = 120  # Ultra can take longer
     STABLE_DIFFUSION_MAX_RETRIES: int = 3
+    
+    # Replicate API - FREE tier with $5 credits for Stable Diffusion
+    REPLICATE_API_TOKEN: str = ""  # Get free credits at replicate.com
+    
+    # AI Engine Configuration
+    AI_ENGINE: str = "local_sdxl"  # local_sdxl, replicate, hf_inference
+    
+    # Local SDXL Configuration
+    SDXL_MODEL_PATH: str = "stabilityai/stable-diffusion-xl-base-1.0"
+    CONTROLNET_MODEL: str = "lllyasviel/sd-controlnet-canny"
+    DEVICE: str = "cuda"  # cuda, cpu, auto
+    MAX_RESOLUTION: str = "1024,1024"  # width,height
+    AI_TIMEOUT_SECONDS: int = 60
+    DETERMINISTIC_GENERATION: bool = True
+    
+    # ControlNet Configuration
+    CONTROLNET_EDGE_METHOD: str = "canny"  # canny, hed
+    CONTROLNET_DEFAULT_RESOLUTION: str = "512,512"
+    CONTROLNET_CANNY_LOW_THRESHOLD: int = 50
+    CONTROLNET_CANNY_HIGH_THRESHOLD: int = 150
+    
+    # Rate Limiting Configuration
+    FREE_DAILY_LIMIT: int = 3
+    AUTHENTICATED_DAILY_LIMIT: int = 5
+    PREMIUM_DAILY_LIMIT: int = 20
+    ADMIN_DAILY_LIMIT: int = 100
+    GLOBAL_REQUESTS_PER_MINUTE: int = 60
+    GLOBAL_REQUESTS_PER_HOUR: int = 500
+    BLOCK_DURATION_MINUTES: int = 60
+    
+    # HuggingFace Configuration
+    HF_API_KEY: str = ""
+    HF_ENDPOINT_URL: str = ""  # For dedicated endpoints
+    HF_MODEL_NAME: str = "stabilityai/stable-diffusion-xl-base-1.0"
     
     VASTU_API_KEY: str = ""
     VASTU_API_URL: str = ""
@@ -72,6 +110,24 @@ class Settings(BaseSettings):
         """Get ALLOWED_IMAGE_TYPES as a list."""
         return [t.strip() for t in self.ALLOWED_IMAGE_TYPES.split(",") if t.strip()]
     
+    @property
+    def max_resolution_tuple(self) -> tuple[int, int]:
+        """Get MAX_RESOLUTION as a tuple (width, height)."""
+        try:
+            width, height = map(int, self.MAX_RESOLUTION.split(","))
+            return (width, height)
+        except (ValueError, AttributeError):
+            return (1024, 1024)  # Default resolution
+    
+    @property
+    def controlnet_resolution_tuple(self) -> tuple[int, int]:
+        """Get CONTROLNET_DEFAULT_RESOLUTION as a tuple (width, height)."""
+        try:
+            width, height = map(int, self.CONTROLNET_DEFAULT_RESOLUTION.split(","))
+            return (width, height)
+        except (ValueError, AttributeError):
+            return (512, 512)  # Default resolution
+    
     @field_validator("MAX_UPLOAD_SIZE")
     @classmethod
     def validate_max_upload_size(cls, v):
@@ -90,12 +146,12 @@ class Settings(BaseSettings):
             raise ValueError("DATABASE_URL must be a PostgreSQL or SQLite connection string")
         return v
     
-    class Config:
-        """Pydantic configuration."""
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = True
-        extra = "ignore"  # Ignore extra env vars not defined here
+    model_config = {
+        "env_file": ".env",
+        "env_file_encoding": "utf-8",
+        "case_sensitive": True,
+        "extra": "ignore"  # Ignore extra env vars not defined here
+    }
 
 
 class ConfigurationError(Exception):

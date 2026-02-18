@@ -1,0 +1,89 @@
+# Core Dependencies
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+pydantic-settings==2.1.0
+python-multipart==0.0.6
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+sqlalchemy==2.0.23
+aiofiles==23.2.1
+aiohttp==3.9.1
+
+# Database
+# sqlite3 is built into Python - no installation needed
+psycopg2-binary==2.9.9  # PostgreSQL (production)
+
+# Firebase
+firebase-admin==6.2.0
+google-cloud-firestore==2.13.1
+google-cloud-storage==2.10.0
+
+# Image Processing
+Pillow==10.1.0
+opencv-python==4.8.1.78
+numpy==1.24.3
+
+# AI/ML Dependencies (Development/Local)
+torch>=2.0.0
+torchvision>=0.15.0
+diffusers==0.24.0
+transformers==4.36.0
+accelerate==0.25.0
+controlnet-aux==0.0.7
+
+# Optional: xformers for memory optimization
+# xformers==0.0.22  # Uncomment if compatible with your PyTorch version
+
+# External API Clients
+replicate==0.24.1
+huggingface_hub==0.19.4
+
+# Monitoring and Logging
+prometheus-client==0.19.0
+structlog==23.2.0
+
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-mock==3.12.0
+httpx==0.25.2
+
+# Development Tools
+black==23.11.0
+isort==5.12.0
+flake8==6.1.0
+mypy==1.7.1
+
+# Production Server
+gunicorn==21.2.0
+
+# Security
+cryptography==41.0.8
+
+# Utilities
+python-dotenv==1.0.0
+httpcore==1.0.2
+tenacity==8.2.3
+
+# Rate Limiting
+slowapi==0.1.9
+
+# Background Tasks
+celery==5.3.4
+redis==5.0.1  # For rate limiting and caching
+
+# File Upload Validation
+python-magic==0.4.27
+
+# CORS
+python-cors==1.7.0
+
+# Environment Management
+python-decouple==3.8
+
+# Health Checks
+psutil==5.9.6
+
+# API Documentation
+fastapi-users==12.1.2  # Optional: For advanced user management

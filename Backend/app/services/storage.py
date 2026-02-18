@@ -1,14 +1,18 @@
 """
-Module 4: Storage Service (Firebase Storage)
+Module 4: Storage Service (Local File Storage)
 
-This module handles image upload, download, and deletion from Firebase Storage.
+This module handles image upload, download, and deletion from local file system.
+Free alternative to Firebase Storage.
 
 Dependencies: Module 1 (Configuration)
 """
 import uuid
 import logging
+import os
+import shutil
 from typing import Optional, List
 from urllib.parse import quote, unquote
+from pathlib import Path
 
 from app.config import get_settings, Settings
 
@@ -32,10 +36,10 @@ class FileTooLargeError(StorageError):
 
 class StorageService:
     """
-    Service for managing file storage in Firebase Storage.
+    Service for managing file storage in local file system.
     
     Handles image uploads, downloads, deletions, and URL generation.
-    Uses Firebase Storage REST API for file operations.
+    Uses local file system as FREE alternative to Firebase Storage.
     """
     
     def __init__(self, settings: Optional[Settings] = None):
@@ -48,16 +52,19 @@ class StorageService:
         self.settings = settings or get_settings()
         self._validate_configuration()
         
-        # Firebase Storage bucket name (usually project_id.appspot.com)
-        self.bucket_name = f"{self.settings.FIREBASE_PROJECT_ID}.appspot.com"
-        self.base_url = f"https://firebasestorage.googleapis.com/v0/b/{self.bucket_name}/o"
+        # Create local storage directory
+        self.storage_dir = Path("uploads")
+        self.storage_dir.mkdir(exist_ok=True)
         
-        logger.info(f"StorageService initialized for Firebase bucket: {self.bucket_name}")
+        # Base URL for serving files
+        self.base_url = "http://127.0.0.1:8000"
+        
+        logger.info(f"StorageService initialized with local storage: {self.storage_dir.absolute()}")
     
     def _validate_configuration(self) -> None:
-        """Validate that required Firebase configuration is present."""
-        if not self.settings.FIREBASE_PROJECT_ID:
-            raise StorageError("FIREBASE_PROJECT_ID not configured")
+        """Validate that required configuration is present."""
+        # Local storage doesn't require any special configuration
+        pass
     
     def _validate_content_type(self, content_type: str) -> bool:
         """
@@ -104,9 +111,8 @@ class StorageService:
         return f"{folder}/{unique_id}.{file_extension}"
     
     def _build_public_url(self, key: str) -> str:
-        """Build public URL for Firebase Storage."""
-        encoded_path = quote(key, safe='')
-        return f"https://firebasestorage.googleapis.com/v0/b/{self.bucket_name}/o/{encoded_path}?alt=media"
+        """Build public URL for local file storage."""
+        return f"{self.base_url}/uploads/{key}"
     
     def upload_image(
         self,
@@ -115,11 +121,13 @@ class StorageService:
         folder: str = "rooms"
     ) -> str:
         """
-        Upload an image to Firebase Storage.
+        Upload an image to local file storage.
         
-        For MVP, returns the URL where client should upload via Firebase SDK.
-        In production, use Firebase Admin SDK for server-side upload.
-        
+        Args:
+            file_content: Raw file content as bytes
+            content_type: MIME type of the file
+            folder: Folder path for organization
+            
         Returns:
             str: Public download URL of uploaded image
         """
@@ -141,46 +149,48 @@ class StorageService:
         # Generate unique filename
         file_name = self._generate_filename(content_type, folder)
         
-        logger.info(f"Generating Firebase Storage URL: {file_name}")
+        # Create full directory path if it doesn't exist
+        file_path = self.storage_dir / file_name
+        file_path.parent.mkdir(parents=True, exist_ok=True)
         
-        # Return the public URL (actual upload via client SDK)
-        url = self._build_public_url(file_name)
-        logger.info(f"Firebase Storage URL ready: {url}")
-        return url
+        # Save file locally
+        try:
+            with open(file_path, 'wb') as f:
+                f.write(file_content)
+            
+            logger.info(f"Successfully saved file: {file_path}")
+            return self._build_public_url(file_name)
+            
+        except Exception as e:
+            logger.error(f"Failed to save file {file_path}: {e}")
+            raise StorageError(f"Failed to upload file: {e}")
     
     def delete_image(self, image_url: str) -> bool:
-        """Delete an image from Firebase Storage."""
+        """Delete an image from local storage."""
         try:
-            path = self._extract_path_from_url(image_url)
-            if not path:
-                logger.warning(f"Could not extract path from URL: {image_url}")
+            # Extract filename from URL
+            if "/uploads/" in image_url:
+                filename = image_url.split("/uploads/")[-1]
+                file_path = self.storage_dir / filename
+                
+                if file_path.exists():
+                    file_path.unlink()
+                    logger.info(f"Successfully deleted file: {file_path}")
+                    return True
+                else:
+                    logger.warning(f"File not found for deletion: {file_path}")
+                    return False
+            else:
+                logger.warning(f"Invalid URL format for deletion: {image_url}")
                 return False
-            
-            logger.info(f"Deleting from Firebase Storage: {path}")
-            # In production, use Firebase Admin SDK
-            return True
-            
+                
         except Exception as e:
             logger.error(f"Failed to delete image: {e}")
             return False
     
-    def _extract_path_from_url(self, image_url: str) -> Optional[str]:
-        """Extract storage path from Firebase Storage URL."""
-        try:
-            if "firebasestorage.googleapis.com" in image_url:
-                parts = image_url.split('/o/')
-                if len(parts) > 1:
-                    path_part = parts[1].split('?')[0]
-                    return unquote(path_part)
-            return None
-        except Exception as e:
-            logger.error(f"Failed to extract path from URL: {e}")
-            return None
-    
     def generate_upload_url(self, path: str) -> str:
-        """Generate upload URL for Firebase Storage."""
-        encoded_path = quote(path, safe='')
-        return f"{self.base_url}/{encoded_path}"
+        """Generate upload URL for local storage."""
+        return f"{self.base_url}/uploads/{path}"
 
 
 # Global storage service instance (initialized lazily)

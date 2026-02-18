@@ -1,0 +1,53 @@
+# AI Engine Configuration - Get Started Quickly
+# Copy this to .env and update with your values
+
+# Core Settings
+APP_NAME=AntarAalay.ai
+DEBUG=true
+ENVIRONMENT=development
+
+# AI Engine Selection
+# Options: local_sdxl, replicate, hf_inference
+AI_ENGINE=replicate
+
+# Replicate Configuration (Recommended for production)
+# Get your token at: https://replicate.com/account
+REPLICATE_API_TOKEN=your_replicate_token_here
+
+# Local SDXL Configuration (Requires GPU and PyTorch)
+# DEVICE=cuda
+# SDXL_MODEL_PATH=stabilityai/stable-diffusion-xl-base-1.0
+# CONTROLNET_MODEL=lllyasviel/sd-controlnet-canny
+
+# HuggingFace Configuration (Enterprise)
+# HF_API_KEY=your_hf_api_key_here
+# HF_ENDPOINT_URL=your_endpoint_url_here
+
+# Generation Parameters
+MAX_RESOLUTION=1024,1024
+AI_TIMEOUT_SECONDS=60
+DETERMINISTIC_GENERATION=true
+
+# ControlNet Settings
+CONTROLNET_EDGE_METHOD=canny
+CONTROLNET_CANNY_LOW_THRESHOLD=50
+CONTROLNET_CANNY_HIGH_THRESHOLD=150
+
+# Rate Limiting
+FREE_DAILY_LIMIT=3
+AUTHENTICATED_DAILY_LIMIT=5
+PREMIUM_DAILY_LIMIT=20
+GLOBAL_REQUESTS_PER_MINUTE=60
+BLOCK_DURATION_MINUTES=60
+
+# Server Settings
+HOST=0.0.0.0
+PORT=8000
+
+# Database (SQLite for development)
+DATABASE_URL=sqlite:///./antaralay.db
+
+# Firebase (Optional - for production)
+# FIREBASE_API_KEY=your_firebase_api_key
+# FIREBASE_PROJECT_ID=your_project_id
+# FIREBASE_STORAGE_BUCKET=your_bucket
