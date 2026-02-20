@@ -25,6 +25,9 @@ Backend/venv/
 Backend/env/
 Backend/.venv/
 Backend/firebase.txt
+Backend/venv_sd15/
+Backend/venv_sd15/**/*
+Backend/config/
 
 # Frontend
 Frontend/.env
@@ -94,3 +97,4 @@ htmlcov/
 .pytest_cache/
 .tox/
 .nox/
+
