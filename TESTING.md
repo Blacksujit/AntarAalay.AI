@@ -54,14 +54,14 @@ Frontend runs at: http://localhost:5173
 ```
 DATABASE_URL=sqlite:///./test.db
 FIREBASE_PROJECT_ID=antaraalayai
-FIREBASE_API_KEY=AIzaSyANQciKqx_Cyi92ahSVaLy_MewUDkZY3fg
+FIREBASE_API_KEY=your-key
 ENVIRONMENT=development
 DEBUG=true
 ```
 
 **Frontend `.env`:**
 ```
-VITE_FIREBASE_API_KEY=AIzaSyANQciKqx_Cyi92ahSVaLy_MewUDkZY3fg
+VITE_FIREBASE_API_KEYyur-key
 VITE_FIREBASE_PROJECT_ID=antaraalayai
 VITE_API_URL=http://localhost:8000
 ```
