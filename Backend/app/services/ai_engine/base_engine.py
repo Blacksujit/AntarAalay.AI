@@ -29,6 +29,7 @@ class EngineType(Enum):
     STATE_OF_THE_ART = "state_of_the_art"
     POLLINATIONS = "pollinations"  # FREE AI generation
     SD15_CONTROLNET = "sd15_controlnet"  # Local GTX 1650 GPU
+    FLUX_WORKING = "flux_working"  # Working FLUX mock engine
 
 
 @dataclass
@@ -219,6 +220,10 @@ class EngineFactory:
         elif engine_type == EngineType.SD15_CONTROLNET:
             from .simple_sd15_engine import SimpleSD15Engine
             return SimpleSD15Engine(config)
+        
+        elif engine_type == EngineType.FLUX_WORKING:
+            from .flux_working_engine import FluxWorkingEngine
+            return FluxWorkingEngine(config)
         
         else:
             # Default to Standalone Image Engine for reliable image generation

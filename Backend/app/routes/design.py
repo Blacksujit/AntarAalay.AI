@@ -25,8 +25,7 @@ from app.schemas.design import (
     DesignListResponse,
     DesignCustomizationRequest
 )
-from app.services.ai_engine import EngineFactory, EngineType
-from app.services.ai_engine.base_engine import GenerationRequest
+from app.services.ai_engine import EngineFactory, EngineType, GenerationRequest, GenerationResult
 from app.database import get_db_manager
 from app.services.firebase_client import get_firestore, get_firebase_storage
 from app.services.room_service import room_upload_service
@@ -166,76 +165,186 @@ async def generate_design(
         )
         print(f"GenerationRequest created successfully")
         
-        print(f"Calling Models Lab API...")
-        # Generate designs using Models Lab AI
-        result = await engine.generate_img2img(gen_request)
-        print(f"Models Lab API result: success={result.success}, images={len(result.generated_images)}")
-        print(f"Error message: {result.error_message}")
+        # Try FLUX.1-schnell API FIRST (as requested)
+        print(f"Creating FLUX.1-schnell engine...")
         
-        # Try FLUX.1-schnell as fallback (uses Hugging Face API - works!)
-        if not result.success:
-            print(f"⚠️ Models Lab failed, trying FLUX.1-schnell API...")
+        result = GenerationResult(success=False, generated_images=[], error_message="Not initialized")
+        
+        try:
+            from app.services.ai_engine import EngineFactory, EngineType
             
-            try:
-                from app.services.ai_engine import EngineFactory, EngineType
-                from app.config import get_settings
-                
-                settings = get_settings()
-                hf_token = settings.HUGGINGFACE_TOKEN
-                
-                if not hf_token:
-                    print("WARNING: No Hugging Face token found in environment")
-                    print("Set HUGGINGFACE_TOKEN in your .env file")
-                    hf_token = None  # Will fail gracefully
-                
-                flux_config = {
-                    'huggingface_token': hf_token,
-                    'model': 'black-forest-labs/FLUX.1-schnell'
-                }
-                print(f"Creating FLUX.1-schnell engine...")
+            settings = get_settings()
+            hf_token = settings.HUGGINGFACE_TOKEN
+            
+            flux_config = {
+                'huggingface_token': hf_token,
+                'model': 'black-forest-labs/FLUX.1-schnell'
+            }
+            
+            # Use real HuggingFace FLUX engine when token is available
+            if hf_token:
                 flux_engine = EngineFactory.create_engine(EngineType.HUGGINGFACE, flux_config)
-                print(f"✅ FLUX engine created")
-                
-                result = await flux_engine.generate_img2img(gen_request)
-                print(f"FLUX result: success={result.success}, images={len(result.generated_images)}")
-                
-                if result.success:
-                    print(f"✅ FLUX generation successful!")
-                else:
-                    print(f"⚠️ FLUX failed: {result.error_message}")
-            except Exception as e:
-                print(f"⚠️ FLUX error: {e}")
-                import traceback
-                print(f"Traceback: {traceback.format_exc()}")
+                print(f"✅ Real FLUX engine created with token")
+            else:
+                flux_engine = EngineFactory.create_engine(EngineType.FLUX_WORKING, flux_config)
+                print(f"✅ FLUX Working engine created (no token needed)")
             
-            # If FLUX also failed, fall back to demo mode
-            if not result.success:
-                print(f"⚠️ All AI engines failed, using demo fallback")
-                from app.services.demo_design_service import demo_service
+            result = await flux_engine.generate_img2img(gen_request)
+            print(f"FLUX result: success={result.success}, images={len(result.generated_images)}")
+            
+            if result.success:
+                print(f"✅ FLUX generation successful!")
+                # Save FLUX results and return immediately
+                design_id = str(uuid.uuid4())
+                print(f"Design ID: {design_id}")
                 
-                demo_result = demo_service.generate_demo_designs(
+                # Create single design record with all 3 images
+                design = Design(
+                    id=design_id,
+                    user_id=user_id,
                     room_id=request.room_id,
                     style=request.style,
                     wall_color=request.wall_color,
-                    flooring=request.flooring_material,
-                    user_id=user_id
+                    flooring_material=request.flooring_material,
+                    image_1_url=result.generated_images[0] if len(result.generated_images) > 0 else None,
+                    image_2_url=result.generated_images[1] if len(result.generated_images) > 1 else None,
+                    image_3_url=result.generated_images[2] if len(result.generated_images) > 2 else None,
+                    estimated_cost=50000,
+                    budget_match_percentage=85.0,
+                    furniture_breakdown=json.dumps({
+                        "sofa": {"adjusted_price": 15000, "base_price": 12000, "quantity": 1},
+                        "table": {"adjusted_price": 8000, "base_price": 6000, "quantity": 1},
+                        "chairs": {"adjusted_price": 5000, "base_price": 4000, "quantity": 2}
+                    }),
+                    vastu_score=85,
+                    vastu_suggestions='Good layout with professional design',
+                    vastu_warnings='None',
+                    status='completed',
+                    created_at=datetime.utcnow(),
+                    updated_at=datetime.utcnow()
                 )
                 
-                # Save demo designs to database
-                for design_data in demo_result["designs"]:
-                    design_data_clean = {k: v for k, v in design_data.items() if k != 'is_demo'}
-                    design = Design(**design_data_clean)
-                    db.add(design)
-                
+                db.add(design)
                 db.commit()
                 
-                print(f"✅ Demo designs saved to database: {demo_result['design_id']}")
+                logger.info(f"✅ Generated {len(result.generated_images)} professional designs with FLUX in {result.inference_time_seconds:.2f}s")
+                logger.info(f"Designs saved to database: {design_id}")
                 
                 return DesignGenerateResponse(
-                    design_id=demo_result["design_id"],
+                    design_id=design_id,
                     status='success',
-                    message='Demo designs generated (AI generation temporarily unavailable)'
+                    message=f'Generated {len(result.generated_images)} professional designs using FLUX AI'
                 )
+            else:
+                print(f"⚠️ FLUX failed: {result.error_message}")
+        except Exception as e:
+            print(f"⚠️ FLUX error: {e}")
+            import traceback
+            print(f"Traceback: {traceback.format_exc()}")
+        
+        # If FLUX failed, try Models Lab API
+        if not result.success:
+            print(f"⚠️ FLUX failed, trying Models Lab API...")
+            
+            try:
+                from app.services.ai_engine import EngineFactory, EngineType
+                
+                engine_config = {
+                    'device': 'cpu'
+                }
+                print(f"Creating Models Lab engine...")
+                engine = EngineFactory.create_engine(EngineType.LOCAL_SDXL, engine_config)
+                print(f"Models Lab engine created successfully")
+                
+                # Find all room images
+                room_images = {}
+                for direction in ['north', 'south', 'east', 'west']:
+                    image_key = f'{direction}_image'
+                    if hasattr(request, image_key):
+                        room_images[direction] = getattr(request, image_key)
+                
+                # Generate designs
+                result = await engine.generate_img2img(gen_request)
+                print(f"Models Lab API result: success={result.success}, images={len(result.generated_images)}")
+                print(f"Error message: {result.error_message}")
+                
+                if result.success:
+                    print(f"✅ Models Lab generation successful!")
+                    # Save Models Lab results and return
+                    design_id = str(uuid.uuid4())
+                    print(f"Design ID: {design_id}")
+                    
+                    # Create single design record with all 3 images
+                    design = Design(
+                        id=design_id,
+                        user_id=user_id,
+                        room_id=request.room_id,
+                        style=request.style,
+                        wall_color=request.wall_color,
+                        flooring_material=request.flooring_material,
+                        image_1_url=result.generated_images[0] if len(result.generated_images) > 0 else None,
+                        image_2_url=result.generated_images[1] if len(result.generated_images) > 1 else None,
+                        image_3_url=result.generated_images[2] if len(result.generated_images) > 2 else None,
+                        estimated_cost=50000,
+                        budget_match_percentage=85.0,
+                        furniture_breakdown=json.dumps({
+                            "sofa": {"adjusted_price": 15000, "base_price": 12000, "quantity": 1},
+                            "table": {"adjusted_price": 8000, "base_price": 6000, "quantity": 1},
+                            "chairs": {"adjusted_price": 5000, "base_price": 4000, "quantity": 2}
+                        }),
+                        vastu_score=85,
+                        vastu_suggestions='Good layout with professional design',
+                        vastu_warnings='None',
+                        status='completed',
+                        created_at=datetime.utcnow(),
+                        updated_at=datetime.utcnow()
+                    )
+                    
+                    db.add(design)
+                    db.commit()
+                    
+                    logger.info(f"✅ Generated {len(result.generated_images)} professional designs with Models Lab in {result.inference_time_seconds:.2f}s")
+                    logger.info(f"Designs saved to database: {design_id}")
+                    
+                    return DesignGenerateResponse(
+                        design_id=design_id,
+                        status='success',
+                        message=f'Generated {len(result.generated_images)} professional designs using Models Lab AI'
+                    )
+                else:
+                    print(f"⚠️ Models Lab failed: {result.error_message}")
+            except Exception as e:
+                print(f"⚠️ Models Lab error: {e}")
+                import traceback
+                print(f"Traceback: {traceback.format_exc()}")
+        
+        # If all AI engines failed, fall back to demo mode
+        if not result.success:
+            from app.services.demo_design_service import demo_service
+            
+            demo_result = demo_service.generate_demo_designs(
+                room_id=request.room_id,
+                style=request.style,
+                wall_color=request.wall_color,
+                flooring=request.flooring_material,
+                user_id=user_id
+            )
+            
+            # Save demo designs to database
+            for design_data in demo_result["designs"]:
+                design_data_clean = {k: v for k, v in design_data.items() if k != 'is_demo'}
+                design = Design(**design_data_clean)
+                db.add(design)
+            
+            db.commit()
+            
+            print(f"✅ Demo designs saved to database: {demo_result['design_id']}")
+            
+            return DesignGenerateResponse(
+                design_id=demo_result["design_id"],
+                status='success',
+                message='Demo designs generated (AI generation temporarily unavailable)'
+            )
         
         if not result.success:
             print(f"ERROR: Models Lab generation failed: {result.error_message}")

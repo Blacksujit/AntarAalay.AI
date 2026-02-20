@@ -5,7 +5,6 @@ This version works without controlnet-aux package by using
 cv2 (OpenCV) directly for Canny edge detection.
 """
 
-import torch
 import gc
 import logging
 import time
@@ -17,12 +16,36 @@ from pathlib import Path
 from PIL import Image
 import numpy as np
 
+# Try to import torch - may not be installed
 try:
-    from diffusers import StableDiffusionImg2ImgPipeline, DDIMScheduler
-    DIFFUSERS_AVAILABLE = True
+    import torch
+    TORCH_AVAILABLE = True
+except ImportError:
+    TORCH_AVAILABLE = False
+    # Create a mock torch module for type hints
+    class MockTorch:
+        class Generator:
+            def __init__(self, device=None):
+                pass
+            def manual_seed(self, seed):
+                return self
+        @staticmethod
+        def cuda():
+            return None
+        @staticmethod
+        def no_grad():
+            import contextlib
+            return contextlib.nullcontext()
+    torch = MockTorch()
+
+# Try to import diffusers - may fail on Windows due to DLL issues
+try:
+    if TORCH_AVAILABLE:
+        from diffusers import StableDiffusionImg2ImgPipeline, DDIMScheduler
+        DIFFUSERS_AVAILABLE = True
+    else:
+        DIFFUSERS_AVAILABLE = False
 except (ImportError, RuntimeError) as e:
-    logger = logging.getLogger(__name__)
-    logger.warning(f"Diffusers not available (DLL/Import error): {e}")
     DIFFUSERS_AVAILABLE = False
 
 try:
@@ -55,14 +78,17 @@ class SimpleSD15Engine(BaseEngine):
             self.use_mock = False
         
         # Configuration for GTX 1650 4GB
-        self.device = config.get('device', 'cuda' if torch.cuda.is_available() else 'cpu')
+        if TORCH_AVAILABLE:
+            self.device = config.get('device', 'cuda' if torch.cuda.is_available() else 'cpu')
+        else:
+            self.device = 'cpu'
         self.resolution = 512  # Fixed for 4GB VRAM
         self.num_inference_steps = config.get('num_inference_steps', 25)
         self.guidance_scale = config.get('guidance_scale', 7.5)
         self.strength = config.get('strength', 0.6)
         
-        # Model - SD 1.5 for lower VRAM usage
-        self.model_id = "runwayml/stable-diffusion-v1-5"
+        # Model - Small distilled SD (fast loading, powerful)
+        self.model_id = "nota-ai/bk-sdm-small"
         
         # Pipeline
         self.pipeline = None
@@ -87,6 +113,12 @@ class SimpleSD15Engine(BaseEngine):
     
     def _load_pipeline(self):
         """Load the Stable Diffusion pipeline with memory optimizations."""
+        if not TORCH_AVAILABLE:
+            logger.warning("PyTorch not available, cannot load pipeline")
+            self.use_mock = True
+            self.pipeline = None
+            return
+            
         try:
             logger.info("Loading Stable Diffusion 1.5 pipeline...")
             
@@ -166,6 +198,9 @@ class SimpleSD15Engine(BaseEngine):
     
     def _generate_real_image(self, prompt: str, input_image: Image.Image, seed: int) -> Optional[str]:
         """Generate a real image using the pipeline."""
+        if not TORCH_AVAILABLE:
+            return None
+            
         try:
             if not self.pipeline:
                 return None
@@ -190,7 +225,7 @@ class SimpleSD15Engine(BaseEngine):
             generated_image = result.images[0]
             
             # Clear cache
-            if torch.cuda.is_available():
+            if TORCH_AVAILABLE and torch.cuda.is_available():
                 torch.cuda.empty_cache()
             
             # Convert to base64
@@ -200,13 +235,9 @@ class SimpleSD15Engine(BaseEngine):
             
             return f"data:image/jpeg;base64,{image_base64}"
             
-        except torch.cuda.OutOfMemoryError:
-            logger.error("GPU OOM - try reducing resolution or batch size")
-            if torch.cuda.is_available():
-                torch.cuda.empty_cache()
-            return None
         except Exception as e:
-            logger.error(f"Generation failed: {e}")
+            if TORCH_AVAILABLE:
+                logger.error(f"Generation failed: {e}")
             return None
     
     async def generate_img2img(self, request: GenerationRequest) -> GenerationResult:
@@ -296,6 +327,6 @@ class SimpleSD15Engine(BaseEngine):
             )
         finally:
             # Cleanup
-            if torch.cuda.is_available():
+            if TORCH_AVAILABLE and torch.cuda.is_available():
                 torch.cuda.empty_cache()
             gc.collect()
