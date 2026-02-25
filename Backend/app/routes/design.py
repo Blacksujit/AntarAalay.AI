@@ -165,36 +165,24 @@ async def generate_design(
         )
         print(f"GenerationRequest created successfully")
         
-        # Try FLUX.1-schnell API FIRST (as requested)
-        print(f"Creating FLUX.1-schnell engine...")
+        # Use AI engine from environment configuration
+        print(f"Creating AI engine from environment...")
         
         result = GenerationResult(success=False, generated_images=[], error_message="Not initialized")
         
         try:
-            from app.services.ai_engine import EngineFactory, EngineType
+            from app.services.ai_engine import EngineFactory
             
-            settings = get_settings()
-            hf_token = settings.HUGGINGFACE_TOKEN
+            # Get engine from environment (pollinations, local_sdxl, etc.)
+            engine = EngineFactory.get_engine_from_env()
+            print(f"✅ {type(engine).__name__} created from environment")
             
-            flux_config = {
-                'huggingface_token': hf_token,
-                'model': 'black-forest-labs/FLUX.1-schnell'
-            }
-            
-            # Use real HuggingFace FLUX engine when token is available
-            if hf_token:
-                flux_engine = EngineFactory.create_engine(EngineType.HUGGINGFACE, flux_config)
-                print(f"✅ Real FLUX engine created with token")
-            else:
-                flux_engine = EngineFactory.create_engine(EngineType.FLUX_WORKING, flux_config)
-                print(f"✅ FLUX Working engine created (no token needed)")
-            
-            result = await flux_engine.generate_img2img(gen_request)
-            print(f"FLUX result: success={result.success}, images={len(result.generated_images)}")
+            result = await engine.generate_img2img(gen_request)
+            print(f"AI generation result: success={result.success}, images={len(result.generated_images)}")
             
             if result.success:
-                print(f"✅ FLUX generation successful!")
-                # Save FLUX results and return immediately
+                print(f"✅ AI generation successful!")
+                # Save results and return immediately
                 design_id = str(uuid.uuid4())
                 print(f"Design ID: {design_id}")
                 
@@ -227,24 +215,24 @@ async def generate_design(
                 db.add(design)
                 db.commit()
                 
-                logger.info(f"✅ Generated {len(result.generated_images)} professional designs with FLUX in {result.inference_time_seconds:.2f}s")
+                logger.info(f"✅ Generated {len(result.generated_images)} professional designs with {type(engine).__name__} in {result.inference_time_seconds:.2f}s")
                 logger.info(f"Designs saved to database: {design_id}")
                 
                 return DesignGenerateResponse(
                     design_id=design_id,
                     status='success',
-                    message=f'Generated {len(result.generated_images)} professional designs using FLUX AI'
+                    message=f'Generated {len(result.generated_images)} professional designs using {type(engine).__name__} AI'
                 )
             else:
-                print(f"⚠️ FLUX failed: {result.error_message}")
+                print(f"⚠️ AI generation failed: {result.error_message}")
         except Exception as e:
-            print(f"⚠️ FLUX error: {e}")
+            print(f"⚠️ AI engine error: {e}")
             import traceback
             print(f"Traceback: {traceback.format_exc()}")
         
-        # If FLUX failed, try Models Lab API
+        # If primary engine failed, try fallback
         if not result.success:
-            print(f"⚠️ FLUX failed, trying Models Lab API...")
+            print(f"⚠️ Primary engine failed, trying fallback...")
             
             try:
                 from app.services.ai_engine import EngineFactory, EngineType
@@ -639,7 +627,8 @@ async def get_room_designs_with_details(
 @router.get("/{design_id}", response_model=DesignResponse)
 async def get_design(
     design_id: str,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     """
     Get a specific design by ID.
@@ -647,8 +636,11 @@ async def get_design(
     try:
         user_id = current_user.get('uid') or current_user.get('localId')
         
-        firestore = get_firestore()
-        design = await firestore.get_design(design_id, user_id)
+        # Query PostgreSQL instead of Firestore
+        design = db.query(Design).filter(
+            Design.id == design_id,
+            Design.user_id == user_id
+        ).first()
         
         if not design:
             raise HTTPException(
@@ -656,7 +648,30 @@ async def get_design(
                 detail="Design not found"
             )
         
-        return DesignResponse(**design)
+        # Convert to response format
+        design_dict = {
+            "id": design.id,
+            "room_id": design.room_id,
+            "user_id": design.user_id,
+            "style": design.style,
+            "budget": design.budget,
+            "wall_color": design.wall_color,
+            "flooring_material": design.flooring_material,
+            "image_1_url": design.image_1_url,
+            "image_2_url": design.image_2_url,
+            "image_3_url": design.image_3_url,
+            "estimated_cost": design.estimated_cost,
+            "budget_match_percentage": design.budget_match_percentage,
+            "furniture_breakdown": json.loads(design.furniture_breakdown) if design.furniture_breakdown and design.furniture_breakdown.startswith('{') else design.furniture_breakdown,
+            "vastu_score": design.vastu_score,
+            "vastu_suggestions": json.loads(design.vastu_suggestions) if design.vastu_suggestions and design.vastu_suggestions.startswith('[') else [design.vastu_suggestions] if design.vastu_suggestions and design.vastu_suggestions != 'None' else [],
+            "vastu_warnings": json.loads(design.vastu_warnings) if design.vastu_warnings and design.vastu_warnings.startswith('[') else [design.vastu_warnings] if design.vastu_warnings and design.vastu_warnings != 'None' else [],
+            "status": design.status,
+            "created_at": design.created_at.isoformat() if design.created_at else None,
+            "updated_at": design.updated_at.isoformat() if design.updated_at else None,
+        }
+        
+        return DesignResponse(**design_dict)
         
     except HTTPException:
         raise

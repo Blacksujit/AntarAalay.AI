@@ -1,17 +1,18 @@
 import { useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { useAuthStore } from '../store/authStore';
 import { Sparkles, Compass, Palette, Shield } from 'lucide-react';
 
 export default function Home() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { user } = useAuthStore();
 
   useEffect(() => {
     if (user) {
-      navigate('/dashboard');
+      router.push('/dashboard');
     }
-  }, [user, navigate]);
+  }, [user, router]);
 
   const features = [
     {
@@ -47,11 +48,11 @@ export default function Home() {
           <h1 className="text-2xl font-bold text-amber-900">AntarAalay.ai</h1>
         </div>
         <nav className="flex items-center gap-4">
-          <Link to="/login" className="text-amber-800 hover:text-amber-900 font-medium">
+          <Link href="/login" className="text-amber-800 hover:text-amber-900 font-medium">
             Sign In
           </Link>
           <Link 
-            to="/login" 
+            href="/login" 
             className="px-6 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-medium transition-all"
           >
             Get Started
@@ -71,7 +72,7 @@ export default function Home() {
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link 
-            to="/login"
+            href="/login"
             className="px-8 py-4 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-semibold text-lg transition-all shadow-lg shadow-amber-600/25"
           >
             Start Designing
@@ -115,7 +116,7 @@ export default function Home() {
             Join thousands of homeowners who have discovered their perfect space with AntarAalay.
           </p>
           <Link 
-            to="/login"
+            href="/login"
             className="inline-block px-8 py-4 bg-white text-amber-600 rounded-xl font-semibold text-lg hover:bg-amber-50 transition-all"
           >
             Get Started Free

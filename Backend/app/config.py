@@ -87,8 +87,14 @@ class Settings(BaseSettings):
     
     # HuggingFace Configuration
     HF_API_KEY: str = ""
+    HF_TOKEN: str = ""  # For HuggingFace InferenceClient
     HF_ENDPOINT_URL: str = ""  # For dedicated endpoints
     HF_MODEL_NAME: str = "stabilityai/stable-diffusion-xl-base-1.0"
+    
+    # FLUX Rate Limiting Configuration
+    FLUX_MAX_GENERATIONS_PER_HOUR: int = 10  # Conservative limit to prevent exhaustion
+    FLUX_MAX_GENERATIONS_PER_DAY: int = 50   # Daily quota limit
+    FLUX_COOLDOWN_SECONDS: int = 30          # Minimum time between generations
     
     VASTU_API_KEY: str = ""
     VASTU_API_URL: str = ""

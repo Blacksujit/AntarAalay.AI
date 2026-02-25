@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.database import get_db_manager, Base
 from app.routes import room, design, vastu
+from app.api import dashboard
 from app.config import get_settings
 from app.services import firebase_client
 
@@ -58,6 +59,7 @@ async def log_requests(request, call_next):
 app.include_router(room.router, prefix="/api")
 app.include_router(design.router, prefix="/api")
 app.include_router(vastu.router, prefix="/api")
+app.include_router(dashboard.router, prefix="/api")
 
 # Create uploads directory if it doesn't exist
 import os

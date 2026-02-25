@@ -18,8 +18,6 @@ vi.mock('firebase/auth', () => ({
 }));
 
 // Mock environment variables
-vi.mock('import.meta.env', () => ({
-  VITE_FIREBASE_API_KEY: 'test-api-key',
-  VITE_FIREBASE_PROJECT_ID: 'test-project',
-  VITE_API_URL: 'http://localhost:8000',
-}));
+process.env.NEXT_PUBLIC_FIREBASE_API_KEY = 'test-api-key';
+process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID = 'test-project';
+process.env.NEXT_PUBLIC_API_URL = 'http://localhost:8000';

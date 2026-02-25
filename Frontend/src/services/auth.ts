@@ -15,16 +15,29 @@ import {
 } from 'firebase/auth';
 import { logger } from '../utils/logger';
 
+function getRequiredEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(
+      `Missing required environment variable: ${name}. ` +
+        `Create/Update Frontend/.env.local (or .env) and restart the Next.js dev server.`
+    );
+  }
+  return value;
+}
+
 // Firebase configuration
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyANQciKqx_Cyi92ahSVaLy_MewUDkZY3fg",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "antaraalayai.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "antaraalayai",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "antaraalayai.firebasestorage.app",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "656663048044",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:656663048044:web:802e1ef31aaf30eb2a0d49",
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-07QNHQGWJ0"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "",
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "",
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "",
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "",
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "",
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "",
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "",
 };
+
+const isBrowser = typeof window !== 'undefined';
 
 // Initialize Firebase (singleton)
 let app: FirebaseApp;
@@ -49,6 +62,9 @@ class AuthService {
   private currentUser: AuthUser | null = null;
 
   async signInWithGoogle(): Promise<AuthUser | null> {
+    if (!isBrowser) {
+      throw new Error('Google sign-in is only available in the browser');
+    }
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
@@ -63,7 +79,7 @@ class AuthService {
       };
       
       // Store token for API calls
-      localStorage.setItem('auth_token', token);
+      window.localStorage.setItem('auth_token', token);
       
       return this.currentUser;
     } catch (error) {
@@ -73,10 +89,11 @@ class AuthService {
   }
 
   async signOut(): Promise<void> {
+    if (!isBrowser) return;
     try {
       await signOut(auth);
       this.currentUser = null;
-      localStorage.removeItem('auth_token');
+      window.localStorage.removeItem('auth_token');
     } catch (error) {
       logger.error('Sign out error', { error }, error as Error);
       throw new Error('Failed to sign out');
@@ -88,6 +105,9 @@ class AuthService {
   }
 
   onAuthStateChange(callback: (user: AuthUser | null) => void): () => void {
+    if (!isBrowser) {
+      return () => undefined;
+    }
     return onAuthStateChanged(auth, async (firebaseUser: User | null) => {
       if (firebaseUser) {
         const token = await firebaseUser.getIdToken();
@@ -98,11 +118,11 @@ class AuthService {
           photoURL: firebaseUser.photoURL,
           token: token
         };
-        localStorage.setItem('auth_token', token);
+        window.localStorage.setItem('auth_token', token);
         callback(this.currentUser);
       } else {
         this.currentUser = null;
-        localStorage.removeItem('auth_token');
+        window.localStorage.removeItem('auth_token');
         callback(null);
       }
     });
@@ -122,3 +142,26 @@ class AuthService {
 
 export const authService = new AuthService();
 export { auth, googleProvider };
+
+// Helpers for Zustand authStore (keeps existing behavior)
+export async function signInWithGoogle(): Promise<{ user: User; token: string }> {
+  const result = await signInWithPopup(auth, googleProvider);
+  const token = await result.user.getIdToken();
+  if (typeof window !== 'undefined') {
+    window.localStorage.setItem('auth_token', token);
+  }
+  return { user: result.user, token };
+}
+
+export async function logoutUser(): Promise<void> {
+  await authService.signOut();
+}
+
+export async function getCurrentUser(): Promise<User | null> {
+  if (typeof window === 'undefined') return null;
+  return auth.currentUser;
+}
+
+export async function getIdToken(user: User, forceRefresh?: boolean): Promise<string> {
+  return user.getIdToken(forceRefresh);
+}

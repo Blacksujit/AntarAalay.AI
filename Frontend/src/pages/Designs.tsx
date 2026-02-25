@@ -28,7 +28,7 @@ export default function Designs() {
     onSuccess: () => {
       refetch();
       setShowCustomize(false);
-    }
+    },
   });
 
   if (isLoading) {
@@ -366,4 +366,8 @@ export default function Designs() {
       </main>
     </div>
   );
+}
+
+export async function getServerSideProps() {
+  return { props: {} };
 }

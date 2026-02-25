@@ -1,7 +1,6 @@
 import { Component } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import { logger } from '../utils/logger';
 
 interface Props {
@@ -88,7 +87,7 @@ export class ErrorBoundary extends Component<Props, State> {
               We apologize for the inconvenience. An unexpected error has occurred.
             </p>
 
-            {import.meta.env.DEV && this.state.error && (
+            {process.env.NODE_ENV !== 'production' && this.state.error && (
               <div className="mb-6 p-4 bg-gray-100 rounded-lg text-left overflow-auto max-h-48">
                 <p className="text-sm font-mono text-red-600 mb-2">
                   {this.state.error.message}
@@ -118,13 +117,13 @@ export class ErrorBoundary extends Component<Props, State> {
                 Reload Page
               </button>
               
-              <Link
-                to="/"
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-white border-2 border-amber-200 hover:bg-amber-50 text-amber-700 rounded-xl font-medium transition-all"
+              <a
+                href="/"
+                className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-all"
               >
                 <Home className="w-4 h-4" />
                 Go Home
-              </Link>
+              </a>
             </div>
           </div>
         </div>

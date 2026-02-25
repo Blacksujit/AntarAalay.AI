@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-stone: #F4EFE6;
+  --color-charcoal: #1F1F1F;
+  --color-accent-gold: #C6A75E;
+}
+
+body {
+  background-color: #F4EFE6;
+  color: #1F1F1F;
+}
+

@@ -300,3 +300,7 @@ export default function Customize() {
     </div>
   );
 }
+
+export async function getServerSideProps() {
+  return { props: {} };
+}

@@ -6,13 +6,14 @@ import {
   logoutUser, 
   getCurrentUser, 
   getIdToken 
-} from '../lib/firebase';
+} from '../services/auth';
 
 interface AuthState {
   user: User | null;
   token: string | null;
   isLoading: boolean;
   error: string | null;
+  isAuthenticated: boolean;
   
   // Actions
   setUser: (user: User | null) => void;
@@ -33,14 +34,17 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       isLoading: false,
       error: null,
+      isAuthenticated: false,
 
-      setUser: (user) => set({ user }),
+      setUser: (user) => set({ user, isAuthenticated: !!user }),
       setToken: (token) => {
         set({ token });
-        if (token) {
-          localStorage.setItem('auth_token', token);
-        } else {
-          localStorage.removeItem('auth_token');
+        if (typeof window !== 'undefined') {
+          if (token) {
+            localStorage.setItem('auth_token', token);
+          } else {
+            localStorage.removeItem('auth_token');
+          }
         }
       },
       setLoading: (isLoading) => set({ isLoading }),
@@ -50,12 +54,13 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true, error: null });
         try {
           const { user, token } = await signInWithGoogle();
-          set({ user, token, isLoading: false });
+          set({ user, token, isLoading: false, isAuthenticated: true });
           localStorage.setItem('auth_token', token);
         } catch (error) {
           set({ 
             error: error instanceof Error ? error.message : 'Sign in failed', 
-            isLoading: false 
+            isLoading: false,
+            isAuthenticated: false
           });
           throw error;
         }
@@ -65,12 +70,15 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true });
         try {
           await logoutUser();
-          set({ user: null, token: null, isLoading: false, error: null });
-          localStorage.removeItem('auth_token');
+          set({ user: null, token: null, isLoading: false, error: null, isAuthenticated: false });
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('auth_token');
+          }
         } catch (error) {
           set({ 
             error: error instanceof Error ? error.message : 'Logout failed', 
-            isLoading: false 
+            isLoading: false,
+            isAuthenticated: false
           });
           throw error;
         }
@@ -82,15 +90,18 @@ export const useAuthStore = create<AuthState>()(
           const user = await getCurrentUser();
           if (user) {
             const token = await getIdToken(user);
-            set({ user, token, isLoading: false });
-            localStorage.setItem('auth_token', token);
+            set({ user, token, isLoading: false, isAuthenticated: true });
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('auth_token', token);
+            }
           } else {
-            set({ isLoading: false });
+            set({ isLoading: false, isAuthenticated: false });
           }
         } catch (error) {
           set({ 
             error: error instanceof Error ? error.message : 'Auth initialization failed', 
-            isLoading: false 
+            isLoading: false,
+            isAuthenticated: false
           });
         }
       },
@@ -101,7 +112,9 @@ export const useAuthStore = create<AuthState>()(
           try {
             const token = await getIdToken(user, true);
             set({ token });
-            localStorage.setItem('auth_token', token);
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('auth_token', token);
+            }
             return token;
           } catch (error) {
             console.error('Token refresh failed:', error);

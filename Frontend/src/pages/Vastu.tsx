@@ -240,3 +240,7 @@ export default function Vastu() {
     </div>
   );
 }
+
+export async function getServerSideProps() {
+  return { props: {} };
+}

@@ -30,6 +30,7 @@ class EngineType(Enum):
     POLLINATIONS = "pollinations"  # FREE AI generation
     SD15_CONTROLNET = "sd15_controlnet"  # Local GTX 1650 GPU
     FLUX_WORKING = "flux_working"  # Working FLUX mock engine
+    STANDALONE = "standalone"  # Offline image generation
 
 
 @dataclass
@@ -225,6 +226,10 @@ class EngineFactory:
             from .flux_working_engine import FluxWorkingEngine
             return FluxWorkingEngine(config)
         
+        elif engine_type == EngineType.STANDALONE:
+            from .standalone_image_engine import StandaloneImageEngine
+            return StandaloneImageEngine(config)
+        
         else:
             # Default to Standalone Image Engine for reliable image generation
             from .standalone_image_engine import StandaloneImageEngine
@@ -251,10 +256,15 @@ class EngineFactory:
             'device': getattr(settings, 'DEVICE', 'cuda' if settings.ENVIRONMENT == 'development' else 'cpu'),
             'replicate_api_token': getattr(settings, 'REPLICATE_API_TOKEN', None),
             'hf_api_key': getattr(settings, 'HF_API_KEY', None),
+            'hf_token': getattr(settings, 'HF_TOKEN', None),  # For HuggingFace InferenceClient
             'hf_endpoint_url': getattr(settings, 'HF_ENDPOINT_URL', None),
             'max_resolution': getattr(settings, 'MAX_RESOLUTION', (1024, 1024)),
             'timeout_seconds': getattr(settings, 'AI_TIMEOUT_SECONDS', 60),
-            'deterministic': getattr(settings, 'DETERMINISTIC_GENERATION', True)
+            'deterministic': getattr(settings, 'DETERMINISTIC_GENERATION', True),
+            # FLUX Rate Limiting
+            'max_generations_per_hour': getattr(settings, 'FLUX_MAX_GENERATIONS_PER_HOUR', 10),
+            'max_generations_per_day': getattr(settings, 'FLUX_MAX_GENERATIONS_PER_DAY', 50),
+            'cooldown_seconds': getattr(settings, 'FLUX_COOLDOWN_SECONDS', 30)
         }
         
         return cls.create_engine(engine_type, config)

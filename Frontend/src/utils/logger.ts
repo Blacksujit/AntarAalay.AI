@@ -4,6 +4,9 @@
  * In production: could be extended to send to error tracking service (Sentry, LogRocket, etc.)
  */
 
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 interface LogEntry {
@@ -14,8 +17,82 @@ interface LogEntry {
   error?: Error;
 }
 
+/**
+ * Merge Tailwind CSS classes with clsx
+ */
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+/**
+ * Design tokens for luxury interior design
+ */
+export const design = {
+  colors: {
+    brand: {
+      beige: '#F5F1E8',
+      charcoal: '#2A2A2A',
+      gold: '#C6A75E',
+      white: '#FAFAFA',
+    },
+    warm: {
+      50: '#FEF9F5',
+      100: '#FDF3E7',
+      200: '#F8EAD7',
+      300: '#F3DDD0',
+      400: '#EED0C9',
+      500: '#E8C3BC',
+      600: '#D4A373',
+      700: '#BF8349',
+      800: '#9C6E3A',
+      900: '#785A2C',
+    },
+    neutral: {
+      50: '#FAFAFA',
+      100: '#F5F5F5',
+      200: '#E5E5E5',
+      300: '#D4D4D4',
+      400: '#A3A3A3',
+      500: '#737373',
+      600: '#525252',
+      700: '#404040',
+      800: '#262626',
+      900: '#171717',
+    },
+    gold: {
+      50: '#FFFBF0',
+      100: '#FEF3C7',
+      200: '#FDE68A',
+      300: '#FCD34D',
+      400: '#FBBF24',
+      500: '#F59E0B',
+      600: '#D97706',
+      700: '#B45309',
+      800: '#92400E',
+      900: '#78350F',
+    },
+  },
+  
+  typography: {
+    fontFamily: {
+      display: ['Playfair Display', 'Georgia', 'serif'],
+      body: ['Inter', 'system-ui', 'sans-serif'],
+      mono: ['JetBrains Mono', 'monospace'],
+    },
+  },
+  
+  shadows: {
+    luxury: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+    soft: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+    glow: '0 0 20px rgba(198, 167, 94, 0.3)',
+    glass: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+  },
+} as const;
+
+export type Design = typeof design;
+
 class Logger {
-  private isDevelopment = import.meta.env.DEV;
+  private isDevelopment = process.env.NODE_ENV !== 'production';
   private logs: LogEntry[] = [];
   private maxLogs = 100;
 

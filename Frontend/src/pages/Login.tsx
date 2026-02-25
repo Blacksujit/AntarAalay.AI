@@ -1,16 +1,12 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 
 export default function Login() {
-  const navigate = useNavigate();
   const { signIn, isLoading, error, user } = useAuthStore();
 
   useEffect(() => {
-    if (user) {
-      navigate('/dashboard');
-    }
-  }, [user, navigate]);
+    void user;
+  }, [user]);
 
   const handleSignIn = async () => {
     try {

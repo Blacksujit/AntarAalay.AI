@@ -36,15 +36,14 @@ class PollinationsEngine(BaseEngine):
         
         style_desc = style_descriptors.get(request.furniture_style, request.furniture_style)
         
-        prompt = f"""
-        Professional interior design photograph, {style_desc},
-        {request.room_type if request.room_type else 'room'} with {request.wall_color} walls,
-        {request.flooring_material} flooring, 
-        high quality furniture arrangement, natural lighting,
-        architectural photography, 4k, detailed, realistic
-        """
+        # Create clean prompt without newlines
+        room_type = request.room_type if request.room_type else 'room'
+        wall_color = request.wall_color if request.wall_color else 'white'
+        flooring = request.flooring_material if request.flooring_material else 'hardwood'
         
-        return prompt.strip()
+        prompt = f"Professional interior design photograph, {style_desc}, {room_type} with {wall_color} walls, {flooring} flooring, high quality furniture arrangement, natural lighting, architectural photography, 4k, detailed, realistic"
+        
+        return prompt
     
     def _build_negative_prompt(self, request: GenerationRequest) -> str:
         """Build negative prompt."""
@@ -71,27 +70,27 @@ class PollinationsEngine(BaseEngine):
                     # Pollinations AI endpoint - FREE, no API key!
                     seed = 42 + i  # Different seed for each variation
                     
-                    # Encode prompt for URL
-                    import urllib.parse
-                    encoded_prompt = urllib.parse.quote(prompt)
-                    encoded_negative = urllib.parse.quote(negative_prompt)
+                    # Clean prompt for URL - remove special characters
+                    clean_prompt = prompt.replace(',', ', ').replace('  ', ' ').strip()
                     
-                    # Pollinations AI URL format
-                    image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=512&height=512&seed={seed}&nologo=true"
+                    # Simple Pollinations AI URL
+                    image_url = f"https://image.pollinations.ai/prompt/{clean_prompt}?width=512&height=512&seed={seed}&nologo=true"
                     
-                    print(f"  Variation {i+1}: {image_url[:60]}...")
+                    print(f"  Variation {i+1}: Generating...")
                     
                     # Download the generated image
-                    async with httpx.AsyncClient(timeout=60) as client:
+                    async with httpx.AsyncClient(timeout=30) as client:
                         response = await client.get(image_url)
-                        response.raise_for_status()
-                        
-                        # Convert to base64
-                        image_data = response.content
-                        base64_image = base64.b64encode(image_data).decode('utf-8')
-                        data_url = f"data:image/jpeg;base64,{base64_image}"
-                        generated_images.append(data_url)
-                        print(f"  ✓ Variation {i+1} generated!")
+                        if response.status_code == 200:
+                            # Convert to base64
+                            image_data = response.content
+                            base64_image = base64.b64encode(image_data).decode('utf-8')
+                            data_url = f"data:image/jpeg;base64,{base64_image}"
+                            generated_images.append(data_url)
+                            print(f"  ✓ Variation {i+1} generated!")
+                        else:
+                            print(f"  ✗ Variation {i+1} failed: HTTP {response.status_code}")
+                            continue
                         
                 except Exception as e:
                     print(f"  ✗ Variation {i+1} failed: {e}")

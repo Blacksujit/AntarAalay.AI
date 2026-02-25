@@ -363,3 +363,7 @@ export default function DesignViewer() {
     </div>
   );
 }
+
+export async function getServerSideProps() {
+  return { props: {} };
+}

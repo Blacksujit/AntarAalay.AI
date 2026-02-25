@@ -2,7 +2,7 @@ import axios, { AxiosError } from 'axios';
 import type { AxiosInstance } from 'axios';
 import { logger } from '../utils/logger';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 class ApiService {
   private client: AxiosInstance;
@@ -18,9 +18,11 @@ class ApiService {
     // Request interceptor to add auth token
     this.client.interceptors.request.use(
       (config) => {
-        const token = localStorage.getItem('auth_token');
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
+        if (typeof window !== 'undefined') {
+          const token = window.localStorage.getItem('auth_token');
+          if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+          }
         }
         return config;
       },

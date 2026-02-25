@@ -1,5 +1,5 @@
 import { useState, useCallback, type ChangeEvent, type DragEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import { useMutation } from '@tanstack/react-query';
 import { Upload as UploadIcon, Compass, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, X, Loader2 } from 'lucide-react';
 import { uploadRoom } from '../services/upload';
@@ -21,7 +21,7 @@ const DIRECTIONS = [
 ] as const;
 
 export default function Upload() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [images, setImages] = useState<Record<Direction, ImageFile | undefined>>({} as Record<Direction, ImageFile | undefined>);
   const [activeDirection, setActiveDirection] = useState<Direction>('north');
 
@@ -29,7 +29,7 @@ export default function Upload() {
     mutationFn: uploadRoom,
     onSuccess: (data) => {
       logger.info('Upload successful', { roomId: data.room_id });
-      navigate(`/customize/${data.room_id}`);
+      router.push(`/customize/${data.room_id}`);
     },
     onError: (error) => {
       logger.error('Upload failed', {}, error as Error);
@@ -300,4 +300,8 @@ export default function Upload() {
       </main>
     </div>
   );
+}
+
+export async function getServerSideProps() {
+  return { props: {} };
 }
