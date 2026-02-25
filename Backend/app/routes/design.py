@@ -158,7 +158,7 @@ async def generate_design(
         gen_request = GenerationRequest(
             primary_image=primary_image,
             room_images=room_images,
-            room_type="living",  # Default to living room
+            room_type=request.room_type or "living",
             furniture_style=request.style.lower(),
             wall_color=request.wall_color.lower(),
             flooring_material=request.flooring_material.lower()

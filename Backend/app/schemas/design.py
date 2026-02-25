@@ -13,6 +13,7 @@ class DesignCustomizationRequest(BaseModel):
 class DesignGenerateRequest(BaseModel):
     room_id: str
     style: str
+    room_type: Optional[str] = "living"
     budget: Optional[float] = None
     wall_color: Optional[str] = "white"
     flooring_material: Optional[str] = "hardwood"

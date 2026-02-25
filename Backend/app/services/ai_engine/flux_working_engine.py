@@ -13,6 +13,7 @@ import random
 from datetime import datetime, timedelta
 
 from app.services.ai_engine.base_engine import BaseEngine, GenerationRequest, GenerationResult
+from app.services.ai_engine.intent_prompt_builder import IntentBasedPromptBuilder
 import logging
 
 logger = logging.getLogger(__name__)
@@ -29,6 +30,7 @@ class FluxWorkingEngine(BaseEngine):
         """Initialize FLUX engine with HuggingFace client and rate limiting."""
         self.api_token = config.get('hf_token') or config.get('huggingface_token') or os.getenv("HF_TOKEN")
         self.model_name = config.get('model', 'black-forest-labs/FLUX.1-schnell')
+        self.prompt_builder = IntentBasedPromptBuilder()
         
         # Rate limiting settings
         self.max_generations_per_hour = config.get('max_generations_per_hour', 10)  # Conservative limit
@@ -63,17 +65,9 @@ class FluxWorkingEngine(BaseEngine):
             print(f"❌ FLUX Engine initialization failed: {e}")
             self.client = None
     
-    def _build_prompt(self, request: GenerationRequest) -> str:
-        """Build professional interior design prompt for FLUX."""
-        style_desc = request.furniture_style or 'modern'
-        room_type = request.room_type or 'living room'
-        wall_color = request.wall_color or 'white'
-        flooring = request.flooring_material or 'hardwood'
-        
-        # Build detailed interior design prompt
-        prompt = f"Professional interior design photograph, {style_desc} style, {room_type} with {wall_color} walls and {flooring} flooring, high quality furniture arrangement, natural lighting, architectural photography, 4k, detailed, realistic"
-        
-        return prompt
+    def _build_prompt(self, request: GenerationRequest, variation: int = 1) -> str:
+        """Build professional interior design prompt using intent-based Vastu approach."""
+        return self.prompt_builder.build_intent_prompt(request, variation)
     
     def _convert_image_to_base64(self, image: Image.Image) -> str:
         """Convert PIL Image to base64 data URL."""
@@ -189,34 +183,38 @@ class FluxWorkingEngine(BaseEngine):
         
         try:
             print(f"Generating with Real FLUX Engine...")
-            prompt = self._build_prompt(request)
-            print(f"Prompt: {prompt[:80]}...")
+            # Show base prompt for reference
+            base_prompt = self._build_prompt(request, 1)
+            print(f"Base Vastu prompt: {base_prompt[:80]}...")
             
             # Record generation attempt (counts toward quota)
             self._record_generation()
             
-            # Generate 3 real variations with different seeds
+            # Generate 3 Vastu-aligned variations with different prompts
             generated_images = []
-            seeds = [42, 123, 456]  # Different seeds for variations
             
             for i in range(3):
-                seed = seeds[i]
-                print(f"  Generating variation {i+1} with seed {seed}...")
+                variation = i + 1
+                print(f"  Generating Vastu variation {variation}...")
+                
+                # Build variation-specific prompt
+                variation_prompt = self._build_prompt(request, variation)
+                print(f"    Prompt {variation}: {variation_prompt[:80]}...")
                 
                 try:
                     # Generate image using HuggingFace FLUX
                     image = self.client.text_to_image(
-                        prompt,
+                        variation_prompt,
                         model=self.model_name
                     )
                     
                     # Convert to base64
                     img_url = self._convert_image_to_base64(image)
                     generated_images.append(img_url)
-                    print(f"  ✓ Variation {i+1} generated!")
+                    print(f"  ✓ Vastu variation {variation} generated!")
                     
                 except Exception as e:
-                    print(f"  ✗ Variation {i+1} failed: {e}")
+                    print(f"  ✗ Vastu variation {variation} failed: {e}")
                     # Continue with other variations even if one fails
                     continue
             
@@ -236,7 +234,7 @@ class FluxWorkingEngine(BaseEngine):
                 engine_used="flux_working",
                 model_version=f"FLUX.1-schnell (HuggingFace)",
                 inference_time_seconds=inference_time,
-                seeds_used=seeds
+                seeds_used=[42, 123, 456]  # Fixed seeds for consistency
             )
             
             print(f"✓ Generated {len(generated_images)} real designs with FLUX in {inference_time:.1f}s")

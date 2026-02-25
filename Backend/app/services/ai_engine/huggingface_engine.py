@@ -11,6 +11,7 @@ from typing import List, Optional
 from PIL import Image
 
 from app.services.ai_engine.base_engine import BaseEngine, GenerationRequest, GenerationResult
+from app.services.ai_engine.intent_prompt_builder import IntentBasedPromptBuilder
 import logging
 
 logger = logging.getLogger(__name__)
@@ -24,8 +25,9 @@ class HuggingFaceEngine(BaseEngine):
     
     def __init__(self, config: dict):
         """Initialize Hugging Face engine."""
-        self.api_token = config.get('huggingface_token') or os.getenv('HF_TOKEN') or os.getenv('HUGGINGFACE_TOKEN')
+        self.api_token = config.get('hf_token') or os.getenv("HF_TOKEN")
         self.model_name = config.get('model', 'black-forest-labs/FLUX.1-schnell')
+        self.prompt_builder = IntentBasedPromptBuilder()
         self.generation_count = 0
         self.max_generations = 1000
         
@@ -36,26 +38,18 @@ class HuggingFaceEngine(BaseEngine):
         try:
             from huggingface_hub import InferenceClient
             self.client = InferenceClient(
-                provider="nscale",
-                api_key=self.api_token,
+                model=self.model_name,
+                token=self.api_token,
+                provider="nscale"
             )
             print(f"InferenceClient created successfully with nscale provider")
         except Exception as e:
             print(f"Failed to create InferenceClient: {e}")
             self.client = None
     
-    def _build_prompt(self, request: GenerationRequest) -> str:
-        """Build interior design prompt for FLUX."""
-        style_desc = {
-            'modern': 'contemporary minimalist',
-            'traditional': 'classic traditional',
-            'minimalist': 'minimalist clean',
-            'industrial': 'industrial loft'
-        }.get(request.furniture_style, request.furniture_style)
-        
-        room_type = request.room_type or 'interior space'
-        
-        return f"Professional interior design photograph of a {style_desc} {room_type}, {request.wall_color} walls, {request.flooring_material} flooring, natural lighting, high quality, 4k, detailed, architectural photography"
+    def _build_prompt(self, request: GenerationRequest, variation: int = 1) -> str:
+        """Build interior design prompt using intent-based Vastu approach."""
+        return self.prompt_builder.build_intent_prompt(request, variation)
     
     async def generate_img2img(self, request: GenerationRequest) -> GenerationResult:
         """Generate interior designs using Hugging Face FLUX API."""
@@ -70,24 +64,24 @@ class HuggingFaceEngine(BaseEngine):
                     engine_used="huggingface"
                 )
             
-            # Build prompt
-            prompt = self._build_prompt(request)
-            print(f"Generating with FLUX.1-schnell...")
-            print(f"Prompt: {prompt[:80]}...")
-            
-            # Generate 3 variations with different seeds
+            # Build Vastu prompts and generate variations
+            print(f"Generating with FLUX.1-schnell using Vastu principles...")
             generated_images = []
             
             for i in range(3):
+                variation = i + 1
+                print(f"  Generating Vastu variation {variation}...")
+                
+                # Build variation-specific Vastu prompt
+                variation_prompt = self._build_prompt(request, variation)
+                print(f"    Vastu prompt {variation}: {variation_prompt[:80]}...")
+                
                 try:
-                    seed = 42 + i
-                    print(f"  Generating variation {i+1} with seed {seed}...")
-                    
                     # Use text_to_image for FLUX.1-schnell (synchronous call)
                     image = self.client.text_to_image(
-                        prompt,
+                        variation_prompt,
                         model=self.model_name,
-                        seed=seed,
+                        seed=42 + i,
                         width=1024,
                         height=1024,
                         num_inference_steps=4,
@@ -100,10 +94,10 @@ class HuggingFaceEngine(BaseEngine):
                     img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
                     data_url = f"data:image/jpeg;base64,{img_str}"
                     generated_images.append(data_url)
-                    print(f"  ✓ Variation {i+1} generated!")
+                    print(f"  ✓ Vastu variation {variation} generated!")
                     
                 except Exception as e:
-                    print(f"  ✗ Variation {i+1} failed: {e}")
+                    print(f"  ✗ Vastu variation {variation} failed: {e}")
                     continue
             
             if not generated_images:

@@ -62,6 +62,7 @@ export interface UploadResponse {
 export interface GenerateRequest {
   room_id: string;
   style: string;
+  room_type?: string;
   budget?: number;
   wall_color?: string;
   flooring_material?: string;

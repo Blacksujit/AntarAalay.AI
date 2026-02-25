@@ -12,7 +12,7 @@ from typing import List, Optional
 from PIL import Image
 
 from app.services.ai_engine.base_engine import BaseEngine, GenerationRequest, GenerationResult
-
+from app.services.ai_engine.intent_prompt_builder import IntentBasedPromptBuilder
 
 class PollinationsEngine(BaseEngine):
     """
@@ -23,60 +23,50 @@ class PollinationsEngine(BaseEngine):
     def __init__(self, config: dict):
         self.generation_count = 0
         self.max_generations = 1000  # Very high limit for free service
+        self.prompt_builder = IntentBasedPromptBuilder()
         print(f"PollinationsEngine initialized - FREE AI generation ready!")
     
-    def _build_prompt(self, request: GenerationRequest) -> str:
-        """Build comprehensive interior design prompt."""
-        style_descriptors = {
-            'modern': 'contemporary minimalist interior design, clean lines, neutral colors',
-            'traditional': 'classic interior design, warm traditional furniture, elegant details',
-            'minimalist': 'minimalist interior, simple clean design, neutral palette',
-            'industrial': 'industrial loft design, raw materials, urban aesthetic'
-        }
-        
-        style_desc = style_descriptors.get(request.furniture_style, request.furniture_style)
-        
-        # Create clean prompt without newlines
-        room_type = request.room_type if request.room_type else 'room'
-        wall_color = request.wall_color if request.wall_color else 'white'
-        flooring = request.flooring_material if request.flooring_material else 'hardwood'
-        
-        prompt = f"Professional interior design photograph, {style_desc}, {room_type} with {wall_color} walls, {flooring} flooring, high quality furniture arrangement, natural lighting, architectural photography, 4k, detailed, realistic"
-        
-        return prompt
+    def _build_prompt(self, request: GenerationRequest, variation: int = 1) -> str:
+        """Build comprehensive interior design prompt using intent-based Vastu approach."""
+        return self.prompt_builder.build_intent_prompt(request, variation)
     
     def _build_negative_prompt(self, request: GenerationRequest) -> str:
-        """Build negative prompt."""
-        return "cartoon, anime, 3d render, illustration, painting, text, watermark, blurry, low quality, distorted"
+        """Build negative prompt using intent-based approach."""
+        return self.prompt_builder.build_negative_prompt(request)
     
     async def generate_img2img(self, request: GenerationRequest) -> GenerationResult:
         """Generate interior designs using FREE Pollinations AI."""
         start_time = time.time()
         
         try:
-            # Build prompt
-            prompt = self._build_prompt(request)
+            # Build negative prompt once (same for all variations)
             negative_prompt = self._build_negative_prompt(request)
             
-            print(f"Generating with Pollinations AI - FREE!")
+            print(f"Generating with Pollinations AI using Vastu principles - FREE!")
             print(f"Style: {request.furniture_style}")
-            print(f"Prompt: {prompt[:80]}...")
             
-            # Generate 3 variations with different seeds
+            # Generate 3 Vastu-aligned variations with different prompts
             generated_images = []
             
             for i in range(3):
+                variation = i + 1
+                print(f"  Generating Vastu variation {variation}...")
+                
+                # Build variation-specific Vastu prompt
+                variation_prompt = self._build_prompt(request, variation)
+                print(f"    Vastu prompt {variation}: {variation_prompt[:80]}...")
+                
                 try:
                     # Pollinations AI endpoint - FREE, no API key!
                     seed = 42 + i  # Different seed for each variation
                     
                     # Clean prompt for URL - remove special characters
-                    clean_prompt = prompt.replace(',', ', ').replace('  ', ' ').strip()
+                    clean_prompt = variation_prompt.replace(',', ', ').replace('  ', ' ').strip()
                     
                     # Simple Pollinations AI URL
                     image_url = f"https://image.pollinations.ai/prompt/{clean_prompt}?width=512&height=512&seed={seed}&nologo=true"
                     
-                    print(f"  Variation {i+1}: Generating...")
+                    print(f"  Vastu variation {variation}: Generating...")
                     
                     # Download the generated image
                     async with httpx.AsyncClient(timeout=30) as client:
@@ -87,9 +77,9 @@ class PollinationsEngine(BaseEngine):
                             base64_image = base64.b64encode(image_data).decode('utf-8')
                             data_url = f"data:image/jpeg;base64,{base64_image}"
                             generated_images.append(data_url)
-                            print(f"  ✓ Variation {i+1} generated!")
+                            print(f"  ✓ Vastu variation {variation} generated!")
                         else:
-                            print(f"  ✗ Variation {i+1} failed: HTTP {response.status_code}")
+                            print(f"  ✗ Vastu variation {variation} failed: HTTP {response.status_code}")
                             continue
                         
                 except Exception as e:

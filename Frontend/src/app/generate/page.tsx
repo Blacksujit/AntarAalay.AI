@@ -86,6 +86,7 @@ export default function GeneratePage() {
       const genResp = await designService.generateDesign({
         room_id: roomId,
         style: selectedStyle,
+        room_type: selectedRoom,
         wall_color: 'white',
         flooring_material: 'hardwood',
       });
