@@ -121,16 +121,33 @@ export default function QRModal({ isOpen, onClose, designId, roomId, userId }: Q
   };
 
   const formatTimeRemaining = (expiresAt: string) => {
-    const now = new Date();
-    const expires = new Date(expiresAt);
-    const diff = expires.getTime() - now.getTime();
-    
-    if (diff <= 0) return 'Expired';
-    
-    const minutes = Math.floor(diff / (1000 * 60));
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-    
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    // For demo sessions, always show a long time
+    if (sessionData?.session_id?.startsWith('demo-session-')) {
+      return '60:00';
+    }
+
+    try {
+      const now = new Date();
+      const expires = new Date(expiresAt);
+      
+      // Check if date is valid
+      if (isNaN(expires.getTime())) {
+        console.warn('Invalid expiration date:', expiresAt);
+        return '60:00'; // Default to 60 minutes
+      }
+      
+      const diff = expires.getTime() - now.getTime();
+      
+      if (diff <= 0) return 'Expired';
+      
+      const minutes = Math.floor(diff / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      
+      return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    } catch (error) {
+      console.error('Error formatting time:', error);
+      return '60:00'; // Default to 60 minutes on error
+    }
   };
 
   const getStatusIcon = () => {

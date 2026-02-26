@@ -74,12 +74,13 @@ export const arService = {
       
       // Return fallback for testing
       console.log('Using fallback AR session...');
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
       return {
         success: true,
         session_id: 'demo-session-' + Date.now(),
         mobile_url: 'https://blacksujit.github.io/AntarAalay.AI/?designId=demo&roomId=demo&userId=demo&style=modern',
         qr_code_data: 'https://blacksujit.github.io/AntarAalay.AI/?designId=demo&roomId=demo&userId=demo&style=modern',
-        expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString()
+        expires_at: expiresAt
       };
     }
   },
@@ -92,11 +93,12 @@ export const arService = {
       // Skip API call for demo/fallback sessions
       if (sessionId.startsWith('demo-session-')) {
         console.log('Skipping status check for demo session:', sessionId);
+        const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
         return {
           success: true,
           session_id: sessionId,
           status: 'active' as any,
-          expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+          expires_at: expiresAt,
           created_at: new Date().toISOString()
         };
       }
@@ -111,11 +113,12 @@ export const arService = {
       return response.json();
     } catch (error) {
       console.error('Session status API failed, using fallback:', error);
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
       return {
         success: true,
         session_id: sessionId,
         status: 'active' as any,
-        expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+        expires_at: expiresAt,
         created_at: new Date().toISOString()
       };
     }
