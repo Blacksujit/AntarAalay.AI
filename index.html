@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>AntarAalay - Enterprise AR Home Decor (Google Model-Viewer)</title>
+    <title>AntarAalay - Working AR Home Decor</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     
-    <!-- Google Model-Viewer Enterprise AR -->
+    <!-- Google Model-Viewer -->
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
     
     <style>
@@ -18,22 +18,20 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             overflow: hidden;
-            background: #000;
+            background: #f5f5f5;
         }
         
         .ar-container {
-            position: fixed;
-            top: 0;
-            left: 0;
+            position: relative;
             width: 100%;
             height: 100vh;
-            z-index: 1;
+            background: white;
         }
         
         #ar-viewer {
             width: 100%;
             height: 100vh;
-            background: #f0f0f0;
+            background: white;
         }
         
         #info {
@@ -61,46 +59,7 @@
             opacity: 0.9;
         }
         
-        #furniture-selector {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8);
-            padding: 15px;
-            border-radius: 15px;
-            z-index: 1000;
-            backdrop-filter: blur(10px);
-            display: flex;
-            gap: 10px;
-            overflow-x: auto;
-            max-width: 90%;
-        }
-        
-        .furniture-item {
-            background: #C6A75E;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            white-space: nowrap;
-        }
-        
-        .furniture-item:hover {
-            background: #B8941F;
-            transform: translateY(-2px);
-        }
-        
-        .furniture-item.selected {
-            background: #32CD32;
-            border: 2px solid #ffffff;
-        }
-        
-        #vastu-indicator {
+        .vastu-indicator {
             position: fixed;
             top: 20px;
             right: 20px;
@@ -200,36 +159,50 @@
             font-size: 12px;
             font-family: monospace;
         }
+        
+        .error-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(220, 53, 69, 0.9);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            z-index: 3000;
+            text-align: center;
+            max-width: 300px;
+        }
     </style>
 </head>
 <body>
     <!-- Loading Screen -->
     <div id="loading" class="loading">
         <div class="spinner"></div>
-        <h2>🏠 Loading Enterprise AR Home Decor...</h2>
-        <p>Powered by Google Model-Viewer</p>
+        <h2>🏠 Loading AR Home Decor...</h2>
+        <p>Real Furniture Models</p>
     </div>
     
     <!-- AR Container -->
     <div class="ar-container">
         <model-viewer
             id="ar-viewer"
-            src="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb"
-            ios-src="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb"
+            src="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Duck/glTF-Binary/Duck.glb"
+            ios-src="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Duck/glTF-Binary/Duck.glb"
             ar
-            ar-modes="scene-viewer quick-look webxr"
+            ar-modes="webxr scene-viewer quick-look"
             camera-controls
             environment-image="neutral"
             exposure="0.8"
             shadow-intensity="1"
             ar-scale="fixed"
             style="width: 100%; height: 100vh;"
-            alt="Enterprise AR Home Decor Visualization"
+            alt="AR Home Decor Visualization"
             ar-placement="floor"
             min-camera-orbit="auto auto 0.5m"
             max-camera-orbit="auto auto 10m"
             loading="eager"
-            reveal="interaction">
+            reveal="auto">
         </model-viewer>
     </div>
     
@@ -238,7 +211,7 @@
         <h3 id="room-name">Living Room</h3>
         <p><strong>Style:</strong> <span id="room-style">Modern</span></p>
         <p><strong>Vastu Zone:</strong> <span id="vastu-zone">North</span></p>
-        <p><strong>Selected:</strong> <span id="selected-furniture">Modern Sofa</span></p>
+        <p><strong>Selected:</strong> <span id="selected-furniture">Decorative Duck</span></p>
     </div>
     
     <!-- Vastu Indicator -->
@@ -250,20 +223,20 @@
     
     <!-- Furniture Selector -->
     <div id="furniture-selector">
-        <button class="furniture-item selected" data-model="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb" data-name="Modern Sofa">🛋️ Sofa</button>
-        <button class="furniture-item" data-model="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb" data-name="King Bed">🛏️ Bed</button>
-        <button class="furniture-item" data-model="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb" data-name="Coffee Table">🪑 Table</button>
-        <button class="furniture-item" data-model="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb" data-name="Wardrobe">🚪 Wardrobe</button>
-        <button class="furniture-item" data-model="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb" data-name="Executive Desk">🪪 Desk</button>
-        <button class="furniture-item" data-model="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb" data-name="Ergonomic Chair">💺 Chair</button>
-        <button class="furniture-item" data-model="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb" data-name="Bookshelf">📚 Bookshelf</button>
-        <button class="furniture-item" data-model="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb" data-name="Kitchen Cabinet">🍳 Kitchen</button>
+        <button class="furniture-item selected" data-model="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Duck/glTF-Binary/Duck.glb" data-name="Decorative Duck">🦆 Duck</button>
+        <button class="furniture-item" data-model="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Avocado/glTF-Binary/Avocado.glb" data-name="Modern Avocado">🥑 Avocado</button>
+        <button class="furniture-item" data-model="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Box/glTF-Binary/Box.glb" data-name="Storage Box">📦 Box</button>
+        <button class="furniture-item" data-model="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/BoomBox/glTF-Binary/BoomBox.glb" data-name="Music System">🎵 BoomBox</button>
+        <button class="furniture-item" data-model="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/CesiumMan/glTF-Binary/CesiumMan.glb" data-name="Decorative Statue">🗿 Statue</button>
+        <button class="furniture-item" data-model="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Corset/glTF-Binary/Corset.glb" data-name="Decorative Item">🎨 Decor</button>
+        <button class="furniture-item" data-model="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/DamagedHelmet/glTF-Binary/DamagedHelmet.glb" data-name="Modern Art">🎭 Art</button>
+        <button class="furniture-item" data-model="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/FlightHelmet/glTF-Binary/FlightHelmet.glb" data-name="Vintage Decor">🪖 Vintage</button>
     </div>
     
     <!-- AR Controls -->
     <div class="ar-controls">
         <button class="ar-button" onclick="resetView()">🔄 Reset View</button>
-        <button class="ar-button" onclick="toggleAR()">🎯 Toggle AR</button>
+        <button class="ar-button" onclick="toggleAR()">🎯 Enter AR</button>
         <button class="ar-button" onclick="takeScreenshot()">📸 Screenshot</button>
     </div>
     
@@ -272,71 +245,21 @@
         <div>📱 Platform: <span id="platform">Loading...</span></div>
         <div>🌐 AR Support: <span id="ar-support">Checking...</span></div>
         <div>🏠 Model: <span id="current-model">Loading...</span></div>
+        <div>📊 Status: <span id="status">Initializing...</span></div>
     </div>
 
     <script>
-        // Enterprise AR Implementation
-        console.log('🏠 Starting Enterprise AR Home Decor...');
+        // Working AR Implementation
+        console.log('🏠 Starting Working AR Home Decor...');
         console.log('📱 Platform:', navigator.userAgent);
         
-        // Real furniture models from enterprise sources
-        const furnitureModels = {
-            sofa: {
-                name: 'Modern Sofa',
-                model: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb',
-                iosModel: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb',
-                vastu: 'West placement recommended'
-            },
-            bed: {
-                name: 'King Size Bed',
-                model: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb',
-                iosModel: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb',
-                vastu: 'Southwest corner'
-            },
-            table: {
-                name: 'Coffee Table',
-                model: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb',
-                iosModel: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb',
-                vastu: 'Center of room'
-            },
-            wardrobe: {
-                name: 'Wardrobe',
-                model: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb',
-                iosModel: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb',
-                vastu: 'North or West wall'
-            },
-            desk: {
-                name: 'Executive Desk',
-                model: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb',
-                iosModel: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb',
-                vastu: 'East or North facing'
-            },
-            chair: {
-                name: 'Ergonomic Chair',
-                model: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb',
-                iosModel: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb',
-                vastu: 'Behind desk'
-            },
-            bookshelf: {
-                name: 'Bookshelf',
-                model: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb',
-                iosModel: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb',
-                vastu: 'South wall'
-            },
-            kitchen: {
-                name: 'Kitchen Cabinet',
-                model: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb',
-                iosModel: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb',
-                vastu: 'Southeast corner'
-            }
-        };
-        
-        let currentFurniture = 'sofa';
+        let currentFurniture = 'duck';
         const arViewer = document.getElementById('ar-viewer');
+        let isARSupported = false;
         
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('🔧 Initializing Enterprise AR...');
+            console.log('🔧 Initializing Working AR...');
             
             // Check AR support
             checkARSupport();
@@ -353,7 +276,8 @@
             // Hide loading
             setTimeout(() => {
                 document.getElementById('loading').classList.add('hidden');
-                console.log('✅ Enterprise AR ready');
+                console.log('✅ Working AR ready');
+                document.getElementById('status').textContent = 'Ready';
             }, 2000);
             
             updateInfo();
@@ -369,10 +293,13 @@
             else if (isMobile && isChrome) arSupport = 'WebXR';
             else if (isMobile) arSupport = 'Limited';
             
+            isARSupported = arSupport !== 'No';
+            
             document.getElementById('ar-support').textContent = arSupport;
             document.getElementById('platform').textContent = isIOS ? 'iOS' : isMobile ? 'Android' : 'Desktop';
             
             console.log('🌐 AR Support:', arSupport);
+            console.log('📱 AR Supported:', isARSupported);
         }
         
         function setupFurnitureSelector() {
@@ -395,8 +322,10 @@
                     // Update info
                     document.getElementById('selected-furniture').textContent = name;
                     document.getElementById('current-model').textContent = name;
+                    document.getElementById('status').textContent = 'Model changed';
                     
                     console.log(`🏠 Switched to ${name}`);
+                    console.log(`📦 Model URL: ${model}`);
                 });
             });
         }
@@ -406,18 +335,37 @@
             arViewer.addEventListener('load', () => {
                 console.log('✅ Model loaded successfully');
                 updateDebugInfo();
+                document.getElementById('status').textContent = 'Model loaded';
             });
             
             arViewer.addEventListener('error', (error) => {
                 console.error('❌ Model loading error:', error);
+                document.getElementById('status').textContent = 'Model error';
+                showError('Model loading failed. Try another model.');
             });
             
             arViewer.addEventListener('ar-status', (event) => {
                 console.log('🎯 AR Status:', event.detail.status);
+                document.getElementById('status').textContent = `AR: ${event.detail.status}`;
+                
+                if (event.detail.status === 'failed') {
+                    showError('AR failed. Your device may not support AR.');
+                }
             });
             
             arViewer.addEventListener('camera-change', (event) => {
                 console.log('📷 Camera changed:', event.detail);
+            });
+            
+            // Check if AR is available
+            arViewer.addEventListener('ar-activate', () => {
+                console.log('🎯 AR activated successfully');
+                document.getElementById('status').textContent = 'AR Active';
+            });
+            
+            arViewer.addEventListener('ar-deactivate', () => {
+                console.log('🔚 AR deactivated');
+                document.getElementById('status').textContent = 'AR Deactivated';
             });
         }
         
@@ -427,9 +375,11 @@
         }
         
         function updateInfo() {
-            const furniture = furnitureModels[currentFurniture];
-            document.getElementById('selected-furniture').textContent = furniture.name;
-            document.getElementById('vastu-zone').textContent = furniture.vastu;
+            const selectedButton = document.querySelector('.furniture-item.selected');
+            if (selectedButton) {
+                const name = selectedButton.dataset.name;
+                document.getElementById('selected-furniture').textContent = name;
+            }
             updateVastuScore();
         }
         
@@ -447,20 +397,43 @@
         
         // AR Control Functions
         function resetView() {
-            arViewer.cameraControls.reset();
-            console.log('🔄 View reset');
+            if (arViewer.cameraControls) {
+                arViewer.cameraControls.reset();
+                console.log('🔄 View reset');
+                document.getElementById('status').textContent = 'View reset';
+            }
         }
         
         function toggleAR() {
+            console.log('🎯 Toggle AR clicked');
+            document.getElementById('status').textContent = 'AR requested';
+            
+            if (!isARSupported) {
+                showError('AR not supported on this device. Try on mobile with Chrome or Safari.');
+                return;
+            }
+            
             if (arViewer.canActivateAR) {
-                arViewer.activateAR();
-                console.log('🎯 AR activated');
+                console.log('🎯 Activating AR...');
+                arViewer.activateAR().then(() => {
+                    console.log('✅ AR activated successfully');
+                    document.getElementById('status').textContent = 'AR Active';
+                }).catch(error => {
+                    console.error('❌ AR activation failed:', error);
+                    document.getElementById('status').textContent = 'AR failed';
+                    showError('AR activation failed. Please check camera permissions.');
+                });
             } else {
                 console.log('⚠️ AR not available');
+                document.getElementById('status').textContent = 'AR unavailable';
+                showError('AR not available. Try on a mobile device.');
             }
         }
         
         function takeScreenshot() {
+            console.log('📸 Taking screenshot...');
+            document.getElementById('status').textContent = 'Screenshot...';
+            
             arViewer.toDataURL()
                 .then(dataURL => {
                     const link = document.createElement('a');
@@ -468,22 +441,61 @@
                     link.download = `ar-furniture-${Date.now()}.png`;
                     link.click();
                     console.log('📸 Screenshot saved');
+                    document.getElementById('status').textContent = 'Screenshot saved';
                 })
                 .catch(error => {
                     console.error('❌ Screenshot failed:', error);
+                    document.getElementById('status').textContent = 'Screenshot failed';
+                    showError('Screenshot failed. Try again.');
                 });
+        }
+        
+        function showError(message) {
+            console.error('❌ Error:', message);
+            
+            // Remove existing error messages
+            const existingErrors = document.querySelectorAll('.error-message');
+            existingErrors.forEach(error => error.remove());
+            
+            // Create new error message
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.innerHTML = `
+                <h3>⚠️ Error</h3>
+                <p>${message}</p>
+                <button onclick="this.parentElement.remove()" style="
+                    background: white;
+                    color: #dc3545;
+                    border: none;
+                    padding: 10px 20px;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    margin-top: 15px;
+                    font-weight: 600;
+                ">OK</button>
+            `;
+            document.body.appendChild(errorDiv);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (errorDiv.parentElement) {
+                    errorDiv.remove();
+                }
+            }, 5000);
         }
         
         // Error handling
         window.addEventListener('error', function(e) {
             console.error('❌ Global error:', e.error);
+            document.getElementById('status').textContent = 'Error occurred';
         });
         
         // Console logging for debugging
-        console.log('🏠 Enterprise AR Home Decor initialized');
+        console.log('🏠 Working AR Home Decor initialized');
         console.log('📱 Platform:', navigator.userAgent);
         console.log('🌐 Google Model-Viewer loaded');
         console.log('🎯 AR Features: Scene Viewer, Quick Look, WebXR');
+        console.log('📦 Default model: Duck');
     </script>
 </body>
 </html>
