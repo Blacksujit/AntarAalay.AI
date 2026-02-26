@@ -12,12 +12,14 @@ import {
   LogOutIcon,
   PlusIcon,
   ClockIcon,
-  ArrowRightIcon
+  ArrowRightIcon,
+  SmartphoneIcon
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { dashboardService, type Design } from '../../services/apiService';
+import { dashboardService, debugDashboard, type Design } from '../../services/apiService';
 import { useAuthStore } from '../../store/authStore';
+import QRModal from '../../components/ar/QRModal';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -25,6 +27,21 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState<{ totalDesigns: number; thisMonth: number; avgGenerationTime: number; favoriteStyle: string } | null>(null);
   const [recentDesigns, setRecentDesigns] = useState<Design[]>([]);
+  const [showARModal, setShowARModal] = useState(false);
+
+  // Debug function to test authentication and database
+  const testDebugEndpoint = async () => {
+    try {
+      console.log('Testing debug endpoint...');
+      const debugData = await debugDashboard();
+      console.log('Debug data:', debugData);
+      alert(`Debug Info:\nUser ID: ${debugData.user?.user_id}\nUser Email: ${debugData.user?.user_email}\nUser Designs: ${debugData.database?.user_designs_count}\nTotal DB Designs: ${debugData.database?.total_designs_in_db}`);
+    } catch (error) {
+      console.error('Debug test failed:', error);
+      alert('Debug test failed. Check console for details.');
+    }
+  };
+  const [selectedDesignId, setSelectedDesignId] = useState<string | null>(null);
   const displayName = useMemo(() => user?.displayName || user?.email || 'Designer', [user]);
 
   useEffect(() => {
@@ -42,29 +59,68 @@ export default function DashboardPage() {
     async function load() {
       try {
         setIsLoading(true);
-        const resp = await dashboardService.getStats();
+        console.log('Loading dashboard data...');
+        
+        // Only try to load stats if user is authenticated
+        if (user?.uid) {
+          const resp = await dashboardService.getStats();
+          if (cancelled) return;
+          console.log('Dashboard data loaded:', resp);
+          setStats(resp.stats);
+          setRecentDesigns(resp.recentDesigns || []);
+        } else {
+          console.log('User not authenticated, skipping dashboard data load');
+          setStats({
+            totalDesigns: 0,
+            thisMonth: 0,
+            avgGenerationTime: 0,
+            favoriteStyle: 'Modern'
+          });
+          setRecentDesigns([]);
+        }
+      } catch (error) {
+        console.error('Failed to load dashboard data:', error);
         if (cancelled) return;
-        setStats(resp.stats);
-        setRecentDesigns(resp.recentDesigns || []);
-      } catch {
-        if (cancelled) return;
+        
+        // Set default values on error
+        setStats({
+          totalDesigns: 0,
+          thisMonth: 0,
+          avgGenerationTime: 0,
+          favoriteStyle: 'Modern'
+        });
+        setRecentDesigns([]);
       } finally {
         if (!cancelled) setIsLoading(false);
       }
     }
 
     if (isAuthenticated) {
-      void load();
+      load();
+    } else {
+      setIsLoading(false);
     }
 
     return () => {
       cancelled = true;
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user]);
 
   const handleLogout = async () => {
     await logout();
     router.push('/');
+  };
+
+  const handleARClick = () => {
+    // Always allow AR access, even without authentication for demo purposes
+    const designId = recentDesigns.length > 0 ? recentDesigns[0].id : 'demo-design-id';
+    const roomId = recentDesigns.length > 0 ? recentDesigns[0].room_id : 'demo-room-id';
+    const userId = user?.uid || 'demo-user';
+    
+    setSelectedDesignId(designId);
+    setShowARModal(true);
+    
+    console.log('AR Session initiated:', { designId, roomId, userId, hasDesigns: recentDesigns.length > 0 });
   };
 
   return (
@@ -82,6 +138,13 @@ export default function DashboardPage() {
               <Link href="/dashboard" className="p-2 text-[#C6A75E] rounded-lg bg-[#C6A75E]/10">
                 <HomeIcon className="w-5 h-5" />
               </Link>
+              <button 
+                onClick={testDebugEndpoint} 
+                className="p-2 text-[#1F1F1F] hover:text-blue-500 transition-colors"
+                title="Debug Dashboard"
+              >
+                <SettingsIcon className="w-5 h-5" />
+              </button>
               <Link href="/settings" className="p-2 text-[#1F1F1F] hover:text-[#C6A75E] transition-colors">
                 <SettingsIcon className="w-5 h-5" />
               </Link>
@@ -153,13 +216,16 @@ export default function DashboardPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              <Link href="/generate" className="block bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all border border-gray-100 group">
+              <button 
+                onClick={handleARClick}
+                className="w-full bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all border border-gray-100 group text-left"
+              >
                 <div className="w-12 h-12 bg-[#C6A75E]/10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-[#C6A75E]/20 transition-colors">
-                  <SparklesIcon className="w-6 h-6 text-[#C6A75E]" />
+                  <SmartphoneIcon className="w-6 h-6 text-[#C6A75E]" />
                 </div>
-                <h3 className="text-lg font-semibold text-[#1F1F1F] mb-2">AI Generate</h3>
-                <p className="text-sm text-gray-600">Generate new designs based on Vastu principles</p>
-              </Link>
+                <h3 className="text-lg font-semibold text-[#1F1F1F] mb-2">Try in AR Vastu</h3>
+                <p className="text-sm text-gray-600">Experience your design in mobile AR</p>
+              </button>
             </motion.div>
 
             <motion.div
@@ -234,6 +300,17 @@ export default function DashboardPage() {
           </motion.div>
         </div>
       </main>
+
+      {/* AR QR Modal */}
+      {showARModal && (
+        <QRModal
+          isOpen={showARModal}
+          onClose={() => setShowARModal(false)}
+          designId={selectedDesignId || 'demo-design-id'}
+          roomId={recentDesigns.length > 0 ? recentDesigns[0]?.room_id || 'demo-room-id' : 'demo-room-id'}
+          userId={user?.uid || 'demo-user'}
+        />
+      )}
     </div>
   );
 }

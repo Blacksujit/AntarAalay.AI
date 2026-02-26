@@ -17,6 +17,74 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
+@router.get("/debug", response_model=Dict[str, Any])
+async def debug_dashboard(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Debug endpoint to check authentication and database status
+    """
+    try:
+        user_id = current_user.get('localId') or current_user.get('user_id')
+        
+        # Check user info
+        user_info = {
+            'authenticated': True,
+            'user_id': user_id,
+            'user_email': current_user.get('email'),
+            'user_data': current_user
+        }
+        
+        # Check database connection
+        try:
+            # Count all designs in database
+            total_db_designs = db.query(Design).count()
+            
+            # Count user's designs
+            user_designs = db.query(Design).filter(
+                Design.user_id == user_id
+            ).count()
+            
+            # Get sample of user's designs
+            sample_designs = db.query(Design).filter(
+                Design.user_id == user_id
+            ).limit(3).all()
+            
+            design_samples = []
+            for design in sample_designs:
+                design_samples.append({
+                    'id': design.id,
+                    'style': design.style,
+                    'created_at': design.created_at.isoformat() if design.created_at else None
+                })
+            
+            db_info = {
+                'connected': True,
+                'total_designs_in_db': total_db_designs,
+                'user_designs_count': user_designs,
+                'sample_designs': design_samples
+            }
+        except Exception as db_error:
+            db_info = {
+                'connected': False,
+                'error': str(db_error)
+            }
+        
+        return {
+            'status': 'debug',
+            'user': user_info,
+            'database': db_info
+        }
+        
+    except Exception as e:
+        return {
+            'status': 'error',
+            'error': str(e),
+            'user': None,
+            'database': None
+        }
+
 @router.get("/stats", response_model=Dict[str, Any])
 async def get_dashboard_stats(
     current_user: dict = Depends(get_current_user),

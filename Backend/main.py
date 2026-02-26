@@ -3,7 +3,7 @@ from fastapi.responses import Response, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.database import get_db_manager, Base
-from app.routes import room, design, vastu
+from app.routes import room, design, vastu, ar
 from app.api import dashboard
 from app.config import get_settings
 from app.services import firebase_client
@@ -18,10 +18,15 @@ engine = db_manager.engine
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
-    title=settings.APP_NAME,
-    description="AI-powered interior design platform with Vastu integration",
+    title="AntarAalay AI API",
+    description="AI-powered interior design and Vastu consultation API",
     version="1.0.0"
 )
+
+# Simple health check endpoint
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "message": "Backend is running"}
 
 # CORS middleware
 app.add_middleware(
@@ -59,6 +64,7 @@ async def log_requests(request, call_next):
 app.include_router(room.router, prefix="/api")
 app.include_router(design.router, prefix="/api")
 app.include_router(vastu.router, prefix="/api")
+app.include_router(ar.router)
 app.include_router(dashboard.router, prefix="/api")
 
 # Create uploads directory if it doesn't exist
