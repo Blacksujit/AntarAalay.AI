@@ -209,65 +209,442 @@
             showCompatibilityMessage();
         }
 
-        // Furniture configurations
+        // REAL HOME DECOR FURNITURE MODELS
         const furnitureTypes = {
             sofa: {
                 name: 'Modern Sofa',
-                geometry: new THREE.BoxGeometry(2, 0.8, 0.8),
+                geometry: createSofaGeometry(),
                 material: new THREE.MeshPhongMaterial({ color: 0x8B4513 }),
                 scale: { x: 1, y: 1, z: 1 },
                 vastu: 'West placement recommended'
             },
             bed: {
                 name: 'King Size Bed',
-                geometry: new THREE.BoxGeometry(2, 0.6, 1.8),
+                geometry: createBedGeometry(),
                 material: new THREE.MeshPhongMaterial({ color: 0xF4EFE6 }),
                 scale: { x: 1, y: 1, z: 1 },
                 vastu: 'Southwest corner'
             },
             table: {
                 name: 'Coffee Table',
-                geometry: new THREE.BoxGeometry(1.2, 0.6, 0.6),
+                geometry: createTableGeometry(),
                 material: new THREE.MeshPhongMaterial({ color: 0xD2691E }),
                 scale: { x: 1, y: 1, z: 1 },
                 vastu: 'Center of room'
             },
             wardrobe: {
                 name: 'Wardrobe',
-                geometry: new THREE.BoxGeometry(0.6, 2, 1),
+                geometry: createWardrobeGeometry(),
                 material: new THREE.MeshPhongMaterial({ color: 0x654321 }),
                 scale: { x: 1, y: 1, z: 1 },
                 vastu: 'North or West wall'
             },
             desk: {
                 name: 'Executive Desk',
-                geometry: new THREE.BoxGeometry(1.8, 0.8, 0.6),
+                geometry: createDeskGeometry(),
                 material: new THREE.MeshPhongMaterial({ color: 0x8B4513 }),
                 scale: { x: 1, y: 1, z: 1 },
                 vastu: 'East or North facing'
             },
             chair: {
                 name: 'Ergonomic Chair',
-                geometry: new THREE.BoxGeometry(0.5, 1, 0.5),
+                geometry: createChairGeometry(),
                 material: new THREE.MeshPhongMaterial({ color: 0x654321 }),
                 scale: { x: 1, y: 1, z: 1 },
                 vastu: 'Behind desk'
             },
             bookshelf: {
                 name: 'Bookshelf',
-                geometry: new THREE.BoxGeometry(0.3, 2, 0.8),
+                geometry: createBookshelfGeometry(),
                 material: new THREE.MeshPhongMaterial({ color: 0x8B4513 }),
                 scale: { x: 1, y: 1, z: 1 },
                 vastu: 'South wall'
             },
             kitchen: {
                 name: 'Kitchen Cabinet',
-                geometry: new THREE.BoxGeometry(2, 2, 0.6),
+                geometry: createKitchenGeometry(),
                 material: new THREE.MeshPhongMaterial({ color: 0xF5F5DC }),
                 scale: { x: 1, y: 1, z: 1 },
                 vastu: 'Southeast corner'
             }
         };
+
+        // REAL FURNITURE GEOMETRY CREATION FUNCTIONS
+        function createSofaGeometry() {
+            const group = new THREE.Group();
+            
+            // Sofa seat
+            const seat = new THREE.Mesh(
+                new THREE.BoxGeometry(2, 0.3, 0.8),
+                new THREE.MeshPhongMaterial({ color: 0x8B4513 })
+            );
+            seat.position.y = 0.3;
+            group.add(seat);
+            
+            // Sofa back
+            const back = new THREE.Mesh(
+                new THREE.BoxGeometry(2, 0.8, 0.1),
+                new THREE.MeshPhongMaterial({ color: 0x8B4513 })
+            );
+            back.position.set(0, 0.7, -0.35);
+            group.add(back);
+            
+            // Sofa arms
+            const leftArm = new THREE.Mesh(
+                new THREE.BoxGeometry(0.1, 0.8, 0.8),
+                new THREE.MeshPhongMaterial({ color: 0x8B4513 })
+            );
+            leftArm.position.set(-0.95, 0.4, 0);
+            group.add(leftArm);
+            
+            const rightArm = new THREE.Mesh(
+                new THREE.BoxGeometry(0.1, 0.8, 0.8),
+                new THREE.MeshPhongMaterial({ color: 0x8B4513 })
+            );
+            rightArm.position.set(0.95, 0.4, 0);
+            group.add(rightArm);
+            
+            // Cushions
+            for (let i = 0; i < 3; i++) {
+                const cushion = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.6, 0.05, 0.7),
+                    new THREE.MeshPhongMaterial({ color: 0xA0522D })
+                );
+                cushion.position.set(-0.6 + i * 0.6, 0.33, 0);
+                group.add(cushion);
+            }
+            
+            return group;
+        }
+
+        function createBedGeometry() {
+            const group = new THREE.Group();
+            
+            // Bed frame
+            const frame = new THREE.Mesh(
+                new THREE.BoxGeometry(2, 0.2, 1.8),
+                new THREE.MeshPhongMaterial({ color: 0x654321 })
+            );
+            frame.position.y = 0.1;
+            group.add(frame);
+            
+            // Mattress
+            const mattress = new THREE.Mesh(
+                new THREE.BoxGeometry(1.9, 0.3, 1.7),
+                new THREE.MeshPhongMaterial({ color: 0xF4EFE6 })
+            );
+            mattress.position.y = 0.35;
+            group.add(mattress);
+            
+            // Pillows
+            for (let i = 0; i < 2; i++) {
+                const pillow = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.4, 0.1, 0.3),
+                    new THREE.MeshPhongMaterial({ color: 0xFFFFFF })
+                );
+                pillow.position.set(-0.3 + i * 0.6, 0.5, -0.5);
+                group.add(pillow);
+            }
+            
+            // Headboard
+            const headboard = new THREE.Mesh(
+                new THREE.BoxGeometry(2, 0.8, 0.05),
+                new THREE.MeshPhongMaterial({ color: 0x654321 })
+            );
+            headboard.position.set(0, 0.4, -0.9);
+            group.add(headboard);
+            
+            return group;
+        }
+
+        function createTableGeometry() {
+            const group = new THREE.Group();
+            
+            // Table top
+            const top = new THREE.Mesh(
+                new THREE.BoxGeometry(1.2, 0.05, 0.6),
+                new THREE.MeshPhongMaterial({ color: 0xD2691E })
+            );
+            top.position.y = 0.5;
+            group.add(top);
+            
+            // Table legs
+            const legPositions = [
+                [-0.5, 0.25, -0.25],
+                [0.5, 0.25, -0.25],
+                [-0.5, 0.25, 0.25],
+                [0.5, 0.25, 0.25]
+            ];
+            
+            legPositions.forEach(pos => {
+                const leg = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.05, 0.5, 0.05),
+                    new THREE.MeshPhongMaterial({ color: 0x8B4513 })
+                );
+                leg.position.set(...pos);
+                group.add(leg);
+            });
+            
+            // Center decoration
+            const decoration = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.1, 0.1, 0.02),
+                new THREE.MeshPhongMaterial({ color: 0xFFD700 })
+            );
+            decoration.position.y = 0.53;
+            group.add(decoration);
+            
+            return group;
+        }
+
+        function createWardrobeGeometry() {
+            const group = new THREE.Group();
+            
+            // Main wardrobe body
+            const body = new THREE.Mesh(
+                new THREE.BoxGeometry(0.6, 2, 1),
+                new THREE.MeshPhongMaterial({ color: 0x654321 })
+            );
+            body.position.y = 1;
+            group.add(body);
+            
+            // Doors
+            for (let i = 0; i < 2; i++) {
+                const door = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.28, 1.8, 0.02),
+                    new THREE.MeshPhongMaterial({ color: 0x8B4513 })
+                );
+                door.position.set(-0.15 + i * 0.3, 1, 0.51);
+                group.add(door);
+                
+                // Door handles
+                const handle = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.01, 0.01, 0.1),
+                    new THREE.MeshPhongMaterial({ color: 0xFFD700 })
+                );
+                handle.position.set(-0.15 + i * 0.3, 1, 0.52);
+                handle.rotation.z = Math.PI / 2;
+                group.add(handle);
+            }
+            
+            // Top decorative element
+            const topDecoration = new THREE.Mesh(
+                new THREE.BoxGeometry(0.65, 0.05, 1.05),
+                new THREE.MeshPhongMaterial({ color: 0x8B4513 })
+            );
+            topDecoration.position.y = 2;
+            group.add(topDecoration);
+            
+            return group;
+        }
+
+        function createDeskGeometry() {
+            const group = new THREE.Group();
+            
+            // Desktop
+            const desktop = new THREE.Mesh(
+                new THREE.BoxGeometry(1.8, 0.05, 0.6),
+                new THREE.MeshPhongMaterial({ color: 0x8B4513 })
+            );
+            desktop.position.y = 0.8;
+            group.add(desktop);
+            
+            // Desk legs
+            const legPositions = [
+                [-0.8, 0.4, -0.25],
+                [0.8, 0.4, -0.25],
+                [-0.8, 0.4, 0.25],
+                [0.8, 0.4, 0.25]
+            ];
+            
+            legPositions.forEach(pos => {
+                const leg = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.05, 0.8, 0.05),
+                    new THREE.MeshPhongMaterial({ color: 0x654321 })
+                );
+                leg.position.set(...pos);
+                group.add(leg);
+            });
+            
+            // Computer monitor
+            const monitorStand = new THREE.Mesh(
+                new THREE.BoxGeometry(0.3, 0.1, 0.2),
+                new THREE.MeshPhongMaterial({ color: 0x333333 })
+            );
+            monitorStand.position.set(0, 0.85, -0.2);
+            group.add(monitorStand);
+            
+            const monitor = new THREE.Mesh(
+                new THREE.BoxGeometry(0.5, 0.3, 0.02),
+                new THREE.MeshPhongMaterial({ color: 0x000000 })
+            );
+            monitor.position.set(0, 1.0, -0.2);
+            group.add(monitor);
+            
+            const screen = new THREE.Mesh(
+                new THREE.BoxGeometry(0.45, 0.25, 0.01),
+                new THREE.MeshPhongMaterial({ color: 0x4169E1 })
+            );
+            screen.position.set(0, 1.0, -0.19);
+            group.add(screen);
+            
+            // Keyboard
+            const keyboard = new THREE.Mesh(
+                new THREE.BoxGeometry(0.4, 0.02, 0.15),
+                new THREE.MeshPhongMaterial({ color: 0x333333 })
+            );
+            keyboard.position.set(0, 0.82, 0.1);
+            group.add(keyboard);
+            
+            return group;
+        }
+
+        function createChairGeometry() {
+            const group = new THREE.Group();
+            
+            // Seat
+            const seat = new THREE.Mesh(
+                new THREE.BoxGeometry(0.5, 0.05, 0.5),
+                new THREE.MeshPhongMaterial({ color: 0x654321 })
+            );
+            seat.position.y = 0.45;
+            group.add(seat);
+            
+            // Backrest
+            const backrest = new THREE.Mesh(
+                new THREE.BoxGeometry(0.5, 0.5, 0.05),
+                new THREE.MeshPhongMaterial({ color: 0x654321 })
+            );
+            backrest.position.set(0, 0.7, -0.22);
+            group.add(backrest);
+            
+            // Chair legs
+            const legPositions = [
+                [-0.2, 0.225, -0.2],
+                [0.2, 0.225, -0.2],
+                [-0.2, 0.225, 0.2],
+                [0.2, 0.225, 0.2]
+            ];
+            
+            legPositions.forEach(pos => {
+                const leg = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.03, 0.45, 0.03),
+                    new THREE.MeshPhongMaterial({ color: 0x333333 })
+                );
+                leg.position.set(...pos);
+                group.add(leg);
+            });
+            
+            // Armrests
+            const leftArmrest = new THREE.Mesh(
+                new THREE.BoxGeometry(0.05, 0.3, 0.4),
+                new THREE.MeshPhongMaterial({ color: 0x654321 })
+            );
+            leftArmrest.position.set(-0.27, 0.6, 0);
+            group.add(leftArmrest);
+            
+            const rightArmrest = new THREE.Mesh(
+                new THREE.BoxGeometry(0.05, 0.3, 0.4),
+                new THREE.MeshPhongMaterial({ color: 0x654321 })
+            );
+            rightArmrest.position.set(0.27, 0.6, 0);
+            group.add(rightArmrest);
+            
+            return group;
+        }
+
+        function createBookshelfGeometry() {
+            const group = new THREE.Group();
+            
+            // Main frame
+            const frame = new THREE.Mesh(
+                new THREE.BoxGeometry(0.3, 2, 0.8),
+                new THREE.MeshPhongMaterial({ color: 0x8B4513 })
+            );
+            frame.position.y = 1;
+            group.add(frame);
+            
+            // Shelves
+            for (let i = 0; i < 4; i++) {
+                const shelf = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.28, 0.02, 0.78),
+                    new THREE.MeshPhongMaterial({ color: 0x654321 })
+                );
+                shelf.position.set(0, 0.3 + i * 0.5, 0);
+                group.add(shelf);
+                
+                // Books on shelves
+                for (let j = 0; j < 3; j++) {
+                    const book = new THREE.Mesh(
+                        new THREE.BoxGeometry(0.08, 0.25, 0.15),
+                        new THREE.MeshPhongMaterial({ 
+                            color: new THREE.Color().setHSL(Math.random(), 0.7, 0.5) 
+                        })
+                    );
+                    book.position.set(-0.08 + j * 0.08, 0.31 + i * 0.5, -0.2 + j * 0.2);
+                    book.rotation.z = (Math.random() - 0.5) * 0.1;
+                    group.add(book);
+                }
+            }
+            
+            return group;
+        }
+
+        function createKitchenGeometry() {
+            const group = new THREE.Group();
+            
+            // Main cabinet body
+            const body = new THREE.Mesh(
+                new THREE.BoxGeometry(2, 2, 0.6),
+                new THREE.MeshPhongMaterial({ color: 0xF5F5DC })
+            );
+            body.position.y = 1;
+            group.add(body);
+            
+            // Cabinet doors
+            for (let i = 0; i < 4; i++) {
+                const door = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.48, 0.9, 0.02),
+                    new THREE.MeshPhongMaterial({ color: 0xDEB887 })
+                );
+                door.position.set(-0.75 + (i % 2) * 1.5, 0.5 + Math.floor(i / 2), 0.31);
+                group.add(door);
+                
+                // Door handles
+                const handle = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.01, 0.01, 0.08),
+                    new THREE.MeshPhongMaterial({ color: 0xC0C0C0 })
+                );
+                handle.position.set(-0.75 + (i % 2) * 1.5, 0.5 + Math.floor(i / 2), 0.32);
+                handle.rotation.z = Math.PI / 2;
+                group.add(handle);
+            }
+            
+            // Countertop
+            const countertop = new THREE.Mesh(
+                new THREE.BoxGeometry(2.1, 0.05, 0.65),
+                new THREE.MeshPhongMaterial({ color: 0x696969 })
+            );
+            countertop.position.y = 2;
+            group.add(countertop);
+            
+            // Sink
+            const sink = new THREE.Mesh(
+                new THREE.BoxGeometry(0.6, 0.1, 0.4),
+                new THREE.MeshPhongMaterial({ color: 0xE0E0E0 })
+            );
+            sink.position.y = 2.03;
+            group.add(sink);
+            
+            // Faucet
+            const faucet = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.02, 0.02, 0.3),
+                new THREE.MeshPhongMaterial({ color: 0xC0C0C0 })
+            );
+            faucet.position.set(0, 2.15, 0);
+            group.add(faucet);
+            
+            return group;
+        }
 
         let selectedFurniture = 'sofa';
         let placedFurniture = [];
