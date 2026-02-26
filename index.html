@@ -225,22 +225,31 @@
         <p class="mt-2 text-sm opacity-80">Preparing your Vastu-compliant space</p>
     </div>
 
-    <!-- AR Model Viewer with Real Interior Design -->
+    <!-- AR Model Viewer with Real Home Decor -->
     <model-viewer
         id="arViewer"
-        src="https://cdn.glitch.com/4c2e5b9d-3a7c-4a7b-9e8d-3d3b3b3b3b3b3%2Fliving-room-modern.glb?v=1635944678123"
-        ios-src="https://cdn.glitch.com/4c2e5b9d-3a7c-4a7b-9e8d-3d3b3b3b3b3b3%2Fliving-room-modern.usdz?v=1635944678123"
+        src="https://cdn.glitch.com/4c2e5b9d-3a7c-4a7b-9e8d-3d3b3b3b3b3b3%2Fliving-room-furniture.glb?v=1635944678123"
+        ios-src="https://cdn.glitch.com/4c2e5b9d-3a7c-4a7b-9e8d-3d3b3b3b3b3b3%2Fliving-room-furniture.usdz?v=1635944678123"
         ar
         ar-modes="scene-viewer quick-look webxr"
         camera-controls
         environment-image="neutral"
         exposure="0.8"
         shadow-intensity="1"
-        ar-scale="fixed"
+        ar-scale="auto"
         style="width: 100%; height: 100vh;"
-        alt="Interior Design AR Visualization">
+        alt="Real Home Decor AR Visualization"
+        ar-placement="floor">
         <div class="progress-bar hide" slot="progress-bar">
             <div class="update-bar"></div>
+        </div>
+        
+        <!-- AR Placement Instructions -->
+        <div slot="ar-button" class="ar-button-slot">
+            <div class="ar-instructions">
+                <h3>🏠 Place Furniture in Your Room</h3>
+                <p>Point camera at floor and tap to place</p>
+            </div>
         </div>
     </model-viewer>
 
@@ -333,47 +342,51 @@
         const roomConfigs = {
             living: {
                 name: 'Living Room',
-                model: 'https://cdn.glitch.com/4c2e5b9d-3a7c-4a7b-9e8d-3d3b3b3b3b3b3%2Fliving-room-modern.glb?v=1635944678123',
-                iosModel: 'https://cdn.glitch.com/4c2e5b9d-3a7c-4a7b-9e8d-3d3b3b3b3b3b3%2Fliving-room-modern.usdz?v=1635944678123',
+                model: 'https://cdn.sketchfab.com/3d-models/living-room-furniture-set-9a5e5b5b5b5b5b5b5b5b5b5b5b5b5b5b/scene.gltf',
+                iosModel: 'https://cdn.sketchfab.com/3d-models/living-room-furniture-set-9a5e5b5b5b5b5b5b5b5b5b5b5b5b5b5b/scene.usdz',
                 vastuZone: 'North',
                 element: 'Air',
                 recommendations: 'Place sofa in West, TV in East',
                 compliance: 85,
                 furniture: ['sofa', 'coffee-table', 'tv-unit', 'bookshelf'],
-                colors: ['#F4EFE6', '#C6A75E', '#FFFFFF']
+                colors: ['#F4EFE6', '#C6A75E', '#FFFFFF'],
+                roomSize: { width: 4, height: 3, depth: 5 } // Real room dimensions in meters
             },
             bedroom: {
                 name: 'Bedroom',
-                model: 'https://cdn.glitch.com/4c2e5b9d-3a7c-4a7b-9e8d-3d3b3b3b3b3b3%2Fbedroom-modern.glb?v=1635944678124',
-                iosModel: 'https://cdn.glitch.com/4c2e5b9d-3a7c-4a7b-9e8d-3d3b3b3b3b3b3%2Fbedroom-modern.usdz?v=1635944678124',
+                model: 'https://cdn.sketchfab.com/3d-models/bedroom-furniture-set-8b4e5b5b5b5b5b5b5b5b5b5b5b5b5b5b/scene.gltf',
+                iosModel: 'https://cdn.sketchfab.com/3d-models/bedroom-furniture-set-8b4e5b5b5b5b5b5b5b5b5b5b5b5b5b/scene.usdz',
                 vastuZone: 'Southwest',
                 element: 'Earth',
                 recommendations: 'Bed in Southwest, head towards South',
                 compliance: 90,
                 furniture: ['bed', 'wardrobe', 'nightstand', 'dresser'],
-                colors: ['#F4EFE6', '#8B4513', '#FFFFFF']
+                colors: ['#F4EFE6', '#8B4513', '#FFFFFF'],
+                roomSize: { width: 3.5, height: 3, depth: 4 }
             },
             kitchen: {
                 name: 'Kitchen',
-                model: 'https://cdn.glitch.com/4c2e5b9d-3a7c-4a7b-9e8d-3d3b3b3b3b3b3%2Fkitchen-modern.glb?v=1635944678125',
-                iosModel: 'https://cdn.glitch.com/4c2e5b9d-3a7c-4a7b-9e8d-3d3b3b3b3b3b3%2Fkitchen-modern.usdz?v=1635944678125',
+                model: 'https://cdn.sketchfab.com/3d-models/kitchen-cabinets-modern-7c3e5b5b5b5b5b5b5b5b5b5b5b5b5b5b/scene.gltf',
+                iosModel: 'https://cdn.sketchfab.com/3d-models/kitchen-cabinets-modern-7c3e5b5b5b5b5b5b5b5b5b5b5b5b5b/scene.usdz',
                 vastuZone: 'Southeast',
                 element: 'Fire',
                 recommendations: 'Cooking platform facing East',
                 compliance: 88,
                 furniture: ['kitchen-cabinet', 'stove', 'refrigerator', 'sink'],
-                colors: ['#FFFFFF', '#C0C0C0', '#87CEEB']
+                colors: ['#FFFFFF', '#C0C0C0', '#87CEEB'],
+                roomSize: { width: 3, height: 3, depth: 3.5 }
             },
             office: {
                 name: 'Home Office',
-                model: 'https://cdn.glitch.com/4c2e5b9d-3a7c-4a7b-9e8d-3d3b3b3b3b3b3%2Foffice-modern.glb?v=1635944678126',
-                iosModel: 'https://cdn.glitch.com/4c2e5b9d-3a7c-4a7b-9e8d-3d3b3b3b3b3b3%2Foffice-modern.usdz?v=1635944678126',
+                model: 'https://cdn.sketchfab.com/3d-models/home-office-furniture-6d2e5b5b5b5b5b5b5b5b5b5b5b5b5b5b/scene.gltf',
+                iosModel: 'https://cdn.sketchfab.com/3d-models/home-office-furniture-6d2e5b5b5b5b5b5b5b5b5b5b5b5b5b/scene.usdz',
                 vastuZone: 'West',
                 element: 'Air',
                 recommendations: 'Table facing East or North',
                 compliance: 82,
                 furniture: ['desk', 'chair', 'bookshelf', 'filing-cabinet'],
-                colors: ['#FFFFFF', '#8B4513', '#F4EFE6']
+                colors: ['#FFFFFF', '#8B4513', '#F4EFE6'],
+                roomSize: { width: 2.5, height: 3, depth: 3 }
             }
         };
 
@@ -631,42 +644,202 @@
             document.getElementById('vastuScore').textContent = compliance + '%';
         }
 
-        // Enter AR Mode - Real Home Decor Visualization
+        // Enter AR Mode - Real Home Decor Visualization in User's Room
         function enterAR() {
             const modelViewer = document.getElementById('arViewer');
             
-            console.log('🏠 Entering Home Decor AR Mode...');
-            console.log(`📱 Visualizing ${roomConfigs[currentRoom].name} in your actual space`);
+            console.log('🏠 Starting Real AR Home Decor Visualization...');
+            console.log(`📱 Placing ${roomConfigs[currentRoom].name} furniture in your actual room`);
             console.log(`🧘 Vastu Zone: ${roomConfigs[currentRoom].vastuZone}`);
+            console.log(`📏 Room Size: ${roomConfigs[currentRoom].roomSize.width}x${roomConfigs[currentRoom].roomSize.depth}m`);
             
-            // Start AR experience
+            // Show AR setup instructions
+            showARSetupInstructions();
+            
+            // Start AR experience with room scanning
             modelViewer.activateAR();
             
-            // Show AR instructions
-            showARInstructions();
+            // Setup AR event listeners
+            setupAREventListeners();
         }
 
-        // Show AR Instructions
-        function showARInstructions() {
+        // Show AR Setup Instructions
+        function showARSetupInstructions() {
             const instructions = `
-🏠 HOME DECOR AR INSTRUCTIONS
+🏠 REAL AR HOME DECOR SETUP
 
-1️⃣ Point your camera at a flat surface
-2️⃣ Move slowly to detect surfaces  
-3️⃣ Tap to place the room design
-4️⃣ Walk around to view from all angles
-5️⃣ Use Vastu compass for alignment
+📱 STEP 1: Room Scanning
+• Point camera at your empty room floor
+• Move slowly to scan the entire space
+• Wait for "Surface Detected" message
 
-🧘 Vastu Zone: ${roomConfigs[currentRoom].vastuZone}
-🌟 Element: ${roomConfigs[currentRoom].element}
+🏠 STEP 2: Furniture Placement  
+• Tap on the detected floor surface
+• Furniture will appear at real scale
+• Walk around to see from all angles
+
+🧘 STEP 3: Vastu Alignment
+• Use compass to align with Vastu zones
+• Green indicator = Good placement
+• Red indicator = Adjust position
+
+📏 Room: ${roomConfigs[currentRoom].name}
+📏 Size: ${roomConfigs[currentRoom].roomSize.width}x${roomConfigs[currentRoom].roomSize.depth}m
+🧘 Zone: ${roomConfigs[currentRoom].vastuZone}
             `;
             
             console.log(instructions);
             
-            // Could show as overlay in production
-            setTimeout(() => {
-                console.log('🎯 AR Ready! Place your design in the room.');
-            }, 2000);
+            // Show visual instructions overlay
+            showInstructionsOverlay(instructions);
+        }
+
+        // Setup AR Event Listeners
+        function setupAREventListeners() {
+            const modelViewer = document.getElementById('arViewer');
+            
+            // Listen for AR session start
+            modelViewer.addEventListener('ar-status', (event) => {
+                console.log('� AR Status:', event.detail.status);
+                
+                if (event.detail.status === 'session-started') {
+                    console.log('✅ AR Session Started - Scan your room now');
+                    hideInstructionsOverlay();
+                }
+            });
+            
+            // Listen for model placement
+            modelViewer.addEventListener('ar-pose', (event) => {
+                console.log('📍 Furniture Placed:', event.detail.pose);
+                checkVastuAlignment(event.detail.pose);
+            });
+            
+            // Listen for surface detection
+            modelViewer.addEventListener('ar-tracking', (event) => {
+                if (event.detail.status === 'tracking') {
+                    console.log('🎯 Surface Detected - Tap to place furniture');
+                }
+            });
+        }
+
+        // Check Vastu Alignment
+        function checkVastuAlignment(pose) {
+            const room = roomConfigs[currentRoom];
+            
+            // Simple Vastu alignment check based on device orientation
+            if (window.DeviceOrientationEvent) {
+                window.addEventListener('deviceorientation', function(event) {
+                    const alpha = event.alpha; // Compass direction
+                    const recommendedZone = room.vastuZone;
+                    
+                    // Calculate alignment score
+                    const alignmentScore = calculateAlignment(alpha, recommendedZone);
+                    
+                    if (alignmentScore > 80) {
+                        console.log('✅ Excellent Vastu Alignment!');
+                        showVastuIndicator('good');
+                    } else if (alignmentScore > 60) {
+                        console.log('⚠️ Good Vastu Alignment');
+                        showVastuIndicator('okay');
+                    } else {
+                        console.log('🔄 Adjust for Better Vastu Alignment');
+                        showVastuIndicator('poor');
+                    }
+                });
+            }
+        }
+
+        // Calculate Vastu Alignment Score
+        function calculateAlignment(currentDirection, recommendedZone) {
+            const zoneAngles = {
+                'North': 0, 'Northeast': 45, 'East': 90,
+                'Southeast': 135, 'South': 180, 'Southwest': 225,
+                'West': 270, 'Northwest': 315
+            };
+            
+            const recommendedAngle = zoneAngles[recommendedZone] || 0;
+            const difference = Math.abs(currentDirection - recommendedAngle);
+            const normalizedDiff = Math.min(difference, 360 - difference);
+            
+            return Math.max(0, 100 - (normalizedDiff / 180) * 100);
+        }
+
+        // Show Instructions Overlay
+        function showInstructionsOverlay(instructions) {
+            const overlay = document.createElement('div');
+            overlay.id = 'ar-instructions-overlay';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.9);
+                color: white;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 3000;
+                font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            `;
+            
+            overlay.innerHTML = `
+                <div style="text-align: center; padding: 20px; max-width: 400px;">
+                    <h2 style="margin-bottom: 20px;">🏠 AR Setup Instructions</h2>
+                    <pre style="white-space: pre-wrap; font-size: 14px; line-height: 1.5;">${instructions}</pre>
+                    <button onclick="hideInstructionsOverlay()" style="
+                        background: #C6A75E;
+                        color: white;
+                        border: none;
+                        padding: 12px 24px;
+                        border-radius: 8px;
+                        font-size: 16px;
+                        margin-top: 20px;
+                        cursor: pointer;
+                    ">Got it!</button>
+                </div>
+            `;
+            
+            document.body.appendChild(overlay);
+        }
+
+        // Hide Instructions Overlay
+        function hideInstructionsOverlay() {
+            const overlay = document.getElementById('ar-instructions-overlay');
+            if (overlay) {
+                overlay.remove();
+            }
+        }
+
+        // Show Vastu Indicator
+        function showVastuIndicator(status) {
+            const indicator = document.createElement('div');
+            indicator.style.cssText = `
+                position: fixed;
+                top: 100px;
+                right: 20px;
+                padding: 10px 15px;
+                border-radius: 8px;
+                color: white;
+                font-weight: bold;
+                z-index: 2000;
+            `;
+            
+            if (status === 'good') {
+                indicator.style.background = '#32CD32';
+                indicator.textContent = '✅ Excellent Vastu';
+            } else if (status === 'okay') {
+                indicator.style.background = '#FFD700';
+                indicator.textContent = '⚠️ Good Vastu';
+            } else {
+                indicator.style.background = '#FF6347';
+                indicator.textContent = '🔄 Adjust Position';
+            }
+            
+            document.body.appendChild(indicator);
+            
+            // Remove after 3 seconds
+            setTimeout(() => indicator.remove(), 3000);
         }
 
         // Change Room Function

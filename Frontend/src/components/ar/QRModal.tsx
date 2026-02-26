@@ -56,6 +56,12 @@ export default function QRModal({ isOpen, onClose, designId, roomId, userId }: Q
   // Poll session status
   useEffect(() => {
     if (sessionData?.session_id && sessionStatus?.status === 'pending') {
+      // Skip polling for demo sessions
+      if (sessionData.session_id.startsWith('demo-session-')) {
+        console.log('Skipping status polling for demo session');
+        return;
+      }
+
       const interval = setInterval(async () => {
         try {
           const status = await arService.getSessionStatus(sessionData.session_id);
