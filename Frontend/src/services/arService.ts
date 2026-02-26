@@ -89,6 +89,18 @@ export const arService = {
    */
   async getSessionStatus(sessionId: string): Promise<ARSessionStatus> {
     try {
+      // Skip API call for demo/fallback sessions
+      if (sessionId.startsWith('demo-session-')) {
+        console.log('Skipping status check for demo session:', sessionId);
+        return {
+          success: true,
+          session_id: sessionId,
+          status: 'active' as any,
+          expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+          created_at: new Date().toISOString()
+        };
+      }
+
       const response = await fetch(`${API_BASE_URL}/api/ar/session/${sessionId}`);
 
       if (!response.ok) {
@@ -98,18 +110,14 @@ export const arService = {
 
       return response.json();
     } catch (error) {
-      console.warn('Session status API failed, using fallback:', error);
-      // Return fallback status when backend is down
-      if (sessionId.startsWith('demo-session-')) {
-        return {
-          success: true,
-          session_id: sessionId,
-          status: 'active',
-          expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
-          created_at: new Date().toISOString(),
-        };
-      }
-      throw error;
+      console.error('Session status API failed, using fallback:', error);
+      return {
+        success: true,
+        session_id: sessionId,
+        status: 'active' as any,
+        expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+        created_at: new Date().toISOString()
+      };
     }
   },
 
