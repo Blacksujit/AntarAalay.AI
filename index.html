@@ -198,6 +198,17 @@
         let hitTestSource = null;
         let hitTestSourceRequested = false;
 
+        // Mobile debugging
+        console.log('🏠 Starting AR Home Decor...');
+        console.log('📱 User Agent:', navigator.userAgent);
+        console.log('🌐 WebXR Support:', 'xr' in navigator);
+
+        // Check WebXR support
+        if (!('xr' in navigator)) {
+            console.error('❌ WebXR not supported on this device');
+            showCompatibilityMessage();
+        }
+
         // Furniture configurations
         const furnitureTypes = {
             sofa: {
@@ -261,73 +272,181 @@
         let selectedFurniture = 'sofa';
         let placedFurniture = [];
 
+        function showCompatibilityMessage() {
+            const message = document.createElement('div');
+            message.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(220, 53, 69, 0.9);
+                color: white;
+                padding: 20px;
+                border-radius: 12px;
+                z-index: 3000;
+                text-align: center;
+                max-width: 300px;
+            `;
+            message.innerHTML = `
+                <h3>❌ AR Not Supported</h3>
+                <p>Your device doesn't support WebXR AR.</p>
+                <p>Try Chrome on Android or Safari on iOS 15+</p>
+                <button onclick="this.parentElement.remove()" style="
+                    background: white;
+                    color: #dc3545;
+                    border: none;
+                    padding: 10px 20px;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    margin-top: 15px;
+                    font-weight: 600;
+                ">OK</button>
+            `;
+            document.body.appendChild(message);
+        }
+
+        function showDebugInfo() {
+            const debug = document.createElement('div');
+            debug.style.cssText = `
+                position: fixed;
+                bottom: 80px;
+                left: 20px;
+                background: rgba(0, 0, 0, 0.8);
+                color: white;
+                padding: 10px;
+                border-radius: 8px;
+                z-index: 1000;
+                font-size: 12px;
+                font-family: monospace;
+            `;
+            debug.innerHTML = `
+                <div>📱 Mobile: ${/Mobi|Android/i.test(navigator.userAgent) ? 'Yes' : 'No'}</div>
+                <div>🌐 WebXR: ${'xr' in navigator ? 'Yes' : 'No'}</div>
+                <div>📱 Screen: ${window.innerWidth}x${window.innerHeight}</div>
+            `;
+            document.body.appendChild(debug);
+        }
+
         init();
 
         function init() {
+            console.log('🔧 Initializing Three.js scene...');
 
-            container = document.createElement( 'div' );
-            document.body.appendChild( container );
+            try {
+                container = document.createElement('div');
+                document.body.appendChild(container);
 
-            scene = new THREE.Scene();
+                scene = new THREE.Scene();
+                scene.background = new THREE.Color(0x808080); // Gray background for debugging
 
-            camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.01, 20 );
+                camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
+                camera.position.set(0, 1.6, 3); // Eye level
 
-            // Lighting
-            const ambientLight = new THREE.HemisphereLight( 0xffffff, 0xbbbbff, 3 );
-            ambientLight.position.set( 0.5, 1, 0.25 );
-            scene.add( ambientLight );
+                // Enhanced lighting for mobile
+                const ambientLight = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 2);
+                ambientLight.position.set(0.5, 1, 0.25);
+                scene.add(ambientLight);
 
-            const directionalLight = new THREE.DirectionalLight( 0xffffff, 1 );
-            directionalLight.position.set( 0, 1, 0 );
-            scene.add( directionalLight );
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+                directionalLight.position.set(0, 1, 0);
+                scene.add(directionalLight);
 
-            // Renderer
-            renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true } );
-            renderer.setPixelRatio( window.devicePixelRatio );
-            renderer.setSize( window.innerWidth, window.innerHeight );
-            renderer.setAnimationLoop( animate );
-            renderer.xr.enabled = true;
-            container.appendChild( renderer.domElement );
+                // Enhanced renderer for mobile
+                renderer = new THREE.WebGLRenderer({ 
+                    antialias: true, 
+                    alpha: true,
+                    powerPreference: "high-performance"
+                });
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Limit for mobile
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setAnimationLoop(animate);
+                renderer.xr.enabled = true;
+                container.appendChild(renderer.domElement);
 
-            // AR Button
-            const arButton = ARButton.createButton( renderer, { requiredFeatures: [ 'hit-test' ] } );
-            document.body.appendChild( arButton );
+                console.log('✅ Three.js renderer created');
 
-            // Controller
-            controller = renderer.xr.getController( 0 );
-            controller.addEventListener( 'select', onSelect );
-            scene.add( controller );
+                // AR Button with enhanced error handling
+                try {
+                    const arButton = ARButton.createButton(renderer, { 
+                        requiredFeatures: ['hit-test'],
+                        optionalFeatures: ['dom-overlay']
+                    });
+                    
+                    // Style AR button for mobile
+                    arButton.style.cssText = `
+                        position: fixed;
+                        bottom: 20px;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        padding: 12px 24px;
+                        font-size: 16px;
+                        font-weight: 600;
+                        z-index: 1000;
+                    `;
+                    
+                    document.body.appendChild(arButton);
+                    console.log('✅ AR Button created');
+                } catch (error) {
+                    console.error('❌ AR Button creation failed:', error);
+                    showCompatibilityMessage();
+                }
 
-            // Reticle (placement indicator)
-            reticle = new THREE.Mesh(
-                new THREE.RingGeometry( 0.15, 0.2, 32 ).rotateX( - Math.PI / 2 ),
-                new THREE.MeshBasicMaterial( { color: 0x00ff00 } )
-            );
-            reticle.matrixAutoUpdate = false;
-            reticle.visible = false;
-            scene.add( reticle );
+                // Controller
+                controller = renderer.xr.getController(0);
+                controller.addEventListener('select', onSelect);
+                scene.add(controller);
 
-            // Event listeners
-            window.addEventListener( 'resize', onWindowResize );
-            setupFurnitureSelector();
+                // Enhanced reticle
+                reticle = new THREE.Mesh(
+                    new THREE.RingGeometry(0.15, 0.2, 32).rotateX(-Math.PI / 2),
+                    new THREE.MeshBasicMaterial({ 
+                        color: 0x00ff00,
+                        side: THREE.DoubleSide
+                    })
+                );
+                reticle.matrixAutoUpdate = false;
+                reticle.visible = false;
+                scene.add(reticle);
 
-            // Hide loading
-            setTimeout(() => {
-                document.getElementById('loading').classList.add('hidden');
-            }, 1000);
+                // Add a test cube to verify rendering
+                const testCube = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.1, 0.1, 0.1),
+                    new THREE.MeshBasicMaterial({ color: 0xff0000 })
+                );
+                testCube.position.set(0, 0, -1);
+                scene.add(testCube);
+                console.log('✅ Test cube added');
 
-            updateInfo();
+                // Event listeners
+                window.addEventListener('resize', onWindowResize);
+                setupFurnitureSelector();
+
+                // Show debug info on mobile
+                if (/Mobi|Android/i.test(navigator.userAgent)) {
+                    showDebugInfo();
+                }
+
+                // Hide loading
+                setTimeout(() => {
+                    document.getElementById('loading').classList.add('hidden');
+                    console.log('✅ Loading hidden, AR ready');
+                }, 1000);
+
+                updateInfo();
+                console.log('✅ Initialization complete');
+
+            } catch (error) {
+                console.error('❌ Initialization failed:', error);
+                showCompatibilityMessage();
+            }
         }
 
         function setupFurnitureSelector() {
             const buttons = document.querySelectorAll('.furniture-item');
             buttons.forEach(button => {
                 button.addEventListener('click', function() {
-                    // Remove selected class from all buttons
                     buttons.forEach(btn => btn.classList.remove('selected'));
-                    // Add selected class to clicked button
                     this.classList.add('selected');
-                    // Update selected furniture
                     selectedFurniture = this.dataset.furniture;
                     updateInfo();
                 });
@@ -354,93 +473,77 @@
         }
 
         function onSelect() {
-
-            if ( reticle.visible ) {
-
+            console.log('👆 onSelect called, reticle.visible:', reticle.visible);
+            
+            if (reticle.visible) {
                 const furniture = furnitureTypes[selectedFurniture];
                 const material = furniture.material.clone();
                 material.color = new THREE.Color(0xffffff * Math.random());
                 
-                const mesh = new THREE.Mesh( furniture.geometry, material );
+                const mesh = new THREE.Mesh(furniture.geometry, material);
                 
                 // Place furniture at reticle position
-                reticle.matrix.decompose( mesh.position, mesh.quaternion, mesh.scale );
-                
-                // Apply furniture-specific scale
+                reticle.matrix.decompose(mesh.position, mesh.quaternion, mesh.scale);
                 mesh.scale.set(furniture.scale.x, furniture.scale.y, furniture.scale.z);
                 
-                scene.add( mesh );
+                scene.add(mesh);
                 placedFurniture.push(mesh);
 
                 console.log(`🏠 Placed ${furniture.name} in AR`);
-
+            } else {
+                console.log('⚠️ Cannot place furniture - reticle not visible');
             }
-
         }
 
         function onWindowResize() {
-
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
-
-            renderer.setSize( window.innerWidth, window.innerHeight );
-
+            renderer.setSize(window.innerWidth, window.innerHeight);
         }
 
-        function animate( timestamp, frame ) {
+        function animate(timestamp, frame) {
+            // Always render, even without AR session
+            renderer.render(scene, camera);
 
-            if ( frame ) {
-
+            if (frame && renderer.xr.isPresenting) {
                 const referenceSpace = renderer.xr.getReferenceSpace();
                 const session = renderer.xr.getSession();
 
-                if ( hitTestSourceRequested === false ) {
-
-                    session.requestReferenceSpace( 'viewer' ).then( function ( referenceSpace ) {
-
-                        session.requestHitTestSource( { space: referenceSpace } ).then( function ( source ) {
-
+                if (hitTestSourceRequested === false) {
+                    session.requestReferenceSpace('viewer').then(function(referenceSpace) {
+                        session.requestHitTestSource({ space: referenceSpace }).then(function(source) {
                             hitTestSource = source;
+                            console.log('✅ Hit test source created');
+                        });
+                    });
 
-                        } );
-
-                    } );
-
-                    session.addEventListener( 'end', function () {
-
+                    session.addEventListener('end', function() {
                         hitTestSourceRequested = false;
                         hitTestSource = null;
-
-                    } );
+                        console.log('🔚 AR session ended');
+                    });
 
                     hitTestSourceRequested = true;
-
                 }
 
-                if ( hitTestSource ) {
+                if (hitTestSource) {
+                    const hitTestResults = frame.getHitTestResults(hitTestSource);
 
-                    const hitTestResults = frame.getHitTestResults( hitTestSource );
-
-                    if ( hitTestResults.length ) {
-
-                        const hit = hitTestResults[ 0 ];
-
+                    if (hitTestResults.length) {
+                        const hit = hitTestResults[0];
                         reticle.visible = true;
-                        reticle.matrix.fromArray( hit.getPose( referenceSpace ).transform.matrix );
-
+                        reticle.matrix.fromArray(hit.getPose(referenceSpace).transform.matrix);
                     } else {
-
                         reticle.visible = false;
-
                     }
-
                 }
-
             }
-
-            renderer.render( scene, camera );
-
         }
+
+        // Error handling
+        window.addEventListener('error', function(e) {
+            console.error('❌ Global error:', e.error);
+        });
 
     </script>
 </body>
