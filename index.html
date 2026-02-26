@@ -228,8 +228,8 @@
     <!-- AR Model Viewer with Real Home Decor -->
     <model-viewer
         id="arViewer"
-        src="https://cdn.glitch.com/4c2e5b9d-3a7c-4a7b-9e8d-3d3b3b3b3b3b3%2Fliving-room-furniture.glb?v=1635944678123"
-        ios-src="https://cdn.glitch.com/4c2e5b9d-3a7c-4a7b-9e8d-3d3b3b3b3b3b3%2Fliving-room-furniture.usdz?v=1635944678123"
+        src="https://modelviewer.dev/shared-assets/models/Astronaut.glb"
+        ios-src="https://modelviewer.dev/shared-assets/models/Astronaut.usdz"
         ar
         ar-modes="scene-viewer quick-look webxr"
         camera-controls
@@ -342,8 +342,8 @@
         const roomConfigs = {
             living: {
                 name: 'Living Room',
-                model: 'https://cdn.sketchfab.com/3d-models/living-room-furniture-set-9a5e5b5b5b5b5b5b5b5b5b5b5b5b5b5b/scene.gltf',
-                iosModel: 'https://cdn.sketchfab.com/3d-models/living-room-furniture-set-9a5e5b5b5b5b5b5b5b5b5b5b5b5b5b5b/scene.usdz',
+                model: 'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
+                iosModel: 'https://modelviewer.dev/shared-assets/models/Astronaut.usdz',
                 vastuZone: 'North',
                 element: 'Air',
                 recommendations: 'Place sofa in West, TV in East',
@@ -354,8 +354,8 @@
             },
             bedroom: {
                 name: 'Bedroom',
-                model: 'https://cdn.sketchfab.com/3d-models/bedroom-furniture-set-8b4e5b5b5b5b5b5b5b5b5b5b5b5b5b5b/scene.gltf',
-                iosModel: 'https://cdn.sketchfab.com/3d-models/bedroom-furniture-set-8b4e5b5b5b5b5b5b5b5b5b5b5b5b5b/scene.usdz',
+                model: 'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
+                iosModel: 'https://modelviewer.dev/shared-assets/models/Astronaut.usdz',
                 vastuZone: 'Southwest',
                 element: 'Earth',
                 recommendations: 'Bed in Southwest, head towards South',
@@ -366,8 +366,8 @@
             },
             kitchen: {
                 name: 'Kitchen',
-                model: 'https://cdn.sketchfab.com/3d-models/kitchen-cabinets-modern-7c3e5b5b5b5b5b5b5b5b5b5b5b5b5b5b/scene.gltf',
-                iosModel: 'https://cdn.sketchfab.com/3d-models/kitchen-cabinets-modern-7c3e5b5b5b5b5b5b5b5b5b5b5b5b5b/scene.usdz',
+                model: 'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
+                iosModel: 'https://modelviewer.dev/shared-assets/models/Astronaut.usdz',
                 vastuZone: 'Southeast',
                 element: 'Fire',
                 recommendations: 'Cooking platform facing East',
@@ -378,8 +378,8 @@
             },
             office: {
                 name: 'Home Office',
-                model: 'https://cdn.sketchfab.com/3d-models/home-office-furniture-6d2e5b5b5b5b5b5b5b5b5b5b5b5b5b5b/scene.gltf',
-                iosModel: 'https://cdn.sketchfab.com/3d-models/home-office-furniture-6d2e5b5b5b5b5b5b5b5b5b5b5b5b5b/scene.usdz',
+                model: 'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
+                iosModel: 'https://modelviewer.dev/shared-assets/models/Astronaut.usdz',
                 vastuZone: 'West',
                 element: 'Air',
                 recommendations: 'Table facing East or North',
@@ -436,14 +436,38 @@
             // Setup event listeners
             setupDesignSelectors();
             
-            // Hide loading overlay after model loads
+            // Hide loading overlay after model loads or timeout
             const modelViewer = document.getElementById('arViewer');
+            let modelLoaded = false;
+            
+            // Set a timeout to prevent infinite loading
+            const loadingTimeout = setTimeout(() => {
+                if (!modelLoaded) {
+                    console.log('⏰ Loading timeout - showing AR interface');
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                    updateDesignDisplay();
+                    showWelcomeMessage();
+                }
+            }, 5000); // 5 second timeout
+            
             modelViewer.addEventListener('load', function() {
+                console.log('✅ Model loaded successfully');
+                modelLoaded = true;
+                clearTimeout(loadingTimeout);
                 setTimeout(() => {
                     document.getElementById('loadingOverlay').style.display = 'none';
                     updateDesignDisplay();
                     showWelcomeMessage();
-                }, 2000);
+                }, 1000);
+            });
+            
+            modelViewer.addEventListener('error', function(event) {
+                console.log('❌ Model loading error:', event);
+                modelLoaded = true;
+                clearTimeout(loadingTimeout);
+                document.getElementById('loadingOverlay').style.display = 'none';
+                updateDesignDisplay();
+                showWelcomeMessage();
             });
             
             // Initialize Vastu compass
