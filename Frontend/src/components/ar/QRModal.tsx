@@ -56,9 +56,16 @@ export default function QRModal({ isOpen, onClose, designId, roomId, userId }: Q
   // Poll session status
   useEffect(() => {
     if (sessionData?.session_id && sessionStatus?.status === 'pending') {
-      // Skip polling for demo sessions
-      if (sessionData.session_id.startsWith('demo-session-')) {
-        console.log('Skipping status polling for demo session');
+      // Skip polling for direct AR sessions
+      if (sessionData.session_id.startsWith('direct-ar-')) {
+        console.log('Direct AR session - no polling needed');
+        setSessionStatus({
+          success: true,
+          session_id: sessionData.session_id,
+          status: 'active',
+          expires_at: sessionData.expires_at,
+          created_at: new Date().toISOString()
+        });
         return;
       }
 
@@ -121,9 +128,9 @@ export default function QRModal({ isOpen, onClose, designId, roomId, userId }: Q
   };
 
   const formatTimeRemaining = (expiresAt: string) => {
-    // For demo sessions, always show a long time
-    if (sessionData?.session_id?.startsWith('demo-session-')) {
-      return '60:00';
+    // For direct AR sessions, always show a long time
+    if (sessionData?.session_id?.startsWith('direct-ar-')) {
+      return '24:00'; // 24 hours
     }
 
     try {
@@ -133,7 +140,7 @@ export default function QRModal({ isOpen, onClose, designId, roomId, userId }: Q
       // Check if date is valid
       if (isNaN(expires.getTime())) {
         console.warn('Invalid expiration date:', expiresAt);
-        return '60:00'; // Default to 60 minutes
+        return '24:00'; // Default to 24 hours
       }
       
       const diff = expires.getTime() - now.getTime();
@@ -146,7 +153,7 @@ export default function QRModal({ isOpen, onClose, designId, roomId, userId }: Q
       return `${minutes}:${seconds.toString().padStart(2, '0')}`;
     } catch (error) {
       console.error('Error formatting time:', error);
-      return '60:00'; // Default to 60 minutes on error
+      return '24:00'; // Default to 24 hours on error
     }
   };
 

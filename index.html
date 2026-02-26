@@ -456,11 +456,11 @@
             const params = getUrlParams();
             console.log('📱 User parameters:', params);
             
-            // Hide loading after 2 seconds
+            // Hide loading immediately
             setTimeout(() => {
                 document.getElementById('loading').classList.add('hidden');
                 document.getElementById('instructions').classList.remove('hidden');
-            }, 2000);
+            }, 1000); // 1 second loading
             
             // Show initial room
             showRoom(currentRoom);

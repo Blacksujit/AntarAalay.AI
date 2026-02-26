@@ -42,106 +42,47 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export const arService = {
   /**
-   * Create a new AR session for mobile visualization
+   * Create AR session - SIMPLIFIED DIRECT URL
    */
   async createSession(request: ARSessionCreateRequest): Promise<ARSessionCreateResponse> {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/ar/session/create`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(request),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Failed to create AR session:', error);
-      
-      // Try to get more error details
-      if (error instanceof Error) {
-        console.error('Error details:', {
-          name: error.name,
-          message: error.message,
-          stack: error.stack
-        });
-      }
-      
-      // Return fallback for testing
-      console.log('Using fallback AR session...');
-      const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
-      return {
-        success: true,
-        session_id: 'demo-session-' + Date.now(),
-        mobile_url: 'https://blacksujit.github.io/AntarAalay.AI/?designId=demo&roomId=demo&userId=demo&style=modern',
-        qr_code_data: 'https://blacksujit.github.io/AntarAalay.AI/?designId=demo&roomId=demo&userId=demo&style=modern',
-        expires_at: expiresAt
-      };
-    }
+    console.log(' Creating direct AR URL - No sessions needed!');
+    
+    // Create direct AR URL without backend session
+    const arUrl = `https://blacksujit.github.io/AntarAalay.AI?designId=${request.design_id}&roomId=${request.room_id}&userId=${request.user_id}&style=modern`;
+    
+    return {
+      success: true,
+      session_id: 'direct-ar-' + Date.now(),
+      mobile_url: arUrl,
+      qr_code_data: arUrl,
+      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
+    };
   },
 
   /**
-   * Get AR session status for polling
+   * Get AR session status - NOT NEEDED FOR DIRECT AR
    */
   async getSessionStatus(sessionId: string): Promise<ARSessionStatus> {
-    try {
-      // Skip API call for demo/fallback sessions
-      if (sessionId.startsWith('demo-session-')) {
-        console.log('Skipping status check for demo session:', sessionId);
-        const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
-        return {
-          success: true,
-          session_id: sessionId,
-          status: 'active' as any,
-          expires_at: expiresAt,
-          created_at: new Date().toISOString()
-        };
-      }
-
-      const response = await fetch(`${API_BASE_URL}/api/ar/session/${sessionId}`);
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || 'Failed to get session status');
-      }
-
-      return response.json();
-    } catch (error) {
-      console.error('Session status API failed, using fallback:', error);
-      const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
-      return {
-        success: true,
-        session_id: sessionId,
-        status: 'active' as any,
-        expires_at: expiresAt,
-        created_at: new Date().toISOString()
-      };
-    }
+    // Return active status for direct AR
+    return {
+      success: true,
+      session_id: sessionId,
+      status: 'active' as any,
+      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      created_at: new Date().toISOString()
+    };
   },
 
   /**
-   * Complete AR session with screenshot and placement data
+   * Complete AR session - NOT NEEDED FOR DIRECT AR
    */
   async completeSession(request: ARSessionCompleteRequest): Promise<ARSessionCompleteResponse> {
-    const response = await fetch(`${API_BASE_URL}/api/ar/session/${request.session_id}/complete`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(request),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to complete AR session');
-    }
-
-    return response.json();
+    return {
+      success: true,
+      session_id: request.session_id,
+      screenshot_url: null,
+      message: 'Direct AR session completed'
+    };
   },
 
   /**
