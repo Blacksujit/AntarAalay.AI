@@ -44,24 +44,53 @@ class ARService:
         db: Session
     ) -> ARSessionCreateResponse:
         """
-        Create a new AR session for mobile visualization.
+        Create a new AR session for mobile visualization with user's actual design data.
         
         Args:
             request: AR session creation request
             db: Database session
             
         Returns:
-            AR session creation response with QR code data
-            
-        Raises:
-            HTTPException: If session creation fails
+            AR session creation response with user's design data
         """
         try:
             # Generate unique session ID
             session_id = str(uuid.uuid4())
             
-            # Create mobile URL
-            mobile_url = f"{self.base_url}/ar/{session_id}"
+            # Fetch user's actual design data from database
+            design_data = None
+            try:
+                design = db.query(Design).filter(
+                    Design.id == request.design_id,
+                    Design.user_id == request.user_id
+                ).first()
+                
+                if design:
+                    design_data = {
+                        'design_id': design.id,
+                        'room_id': design.room_id,
+                        'style': design.style,
+                        'wall_color': design.wall_color,
+                        'flooring_material': design.flooring_material,
+                        'image_1_url': design.image_1_url,
+                        'estimated_cost': design.estimated_cost
+                    }
+                    logger.info(f"Loaded user design data: {design_data}")
+                else:
+                    logger.warning(f"Design not found: {request.design_id}")
+                    
+            except Exception as e:
+                logger.error(f"Failed to load design data: {e}")
+            
+            # Create production AR URL with user's design parameters
+            base_url = self.base_url
+            
+            # Build URL with user's actual design data
+            if design_data:
+                ar_url = f"{base_url}?designId={design_data['design_id']}&roomId={design_data['room_id']}&userId={request.user_id}&style={design_data['style']}&wallColor={design_data['wall_color']}&flooring={design_data['flooring_material']}"
+            else:
+                # Fallback URL for demo
+                ar_url = f"{base_url}?designId={request.design_id}&roomId={request.room_id}&userId={request.user_id}&style=modern"
             
             # Calculate expiration time
             expires_at = datetime.utcnow() + timedelta(minutes=self.session_timeout_minutes)
@@ -73,8 +102,9 @@ class ARService:
                 design_id=request.design_id,
                 room_id=request.room_id,
                 status=ARSessionStatus.PENDING,
-                mobile_url=mobile_url,
-                expires_at=expires_at
+                expires_at=expires_at,
+                mobile_url=ar_url,
+                qr_code_data=ar_url
             )
             
             # Save to database
@@ -82,13 +112,13 @@ class ARService:
             db.commit()
             db.refresh(ar_session)
             
-            logger.info(f"Created AR session {session_id} for user {request.user_id}")
+            logger.info(f"Created AR session {session_id} for user {request.user_id} with design data")
             
             return ARSessionCreateResponse(
                 success=True,
                 session_id=session_id,
-                mobile_url=mobile_url,
-                qr_code_data=mobile_url,
+                mobile_url=ar_url,
+                qr_code_data=ar_url,
                 expires_at=expires_at
             )
             

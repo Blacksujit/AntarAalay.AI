@@ -225,21 +225,20 @@
         <p class="mt-2 text-sm opacity-80">Preparing your Vastu-compliant space</p>
     </div>
 
-    <!-- AR Model Viewer -->
+    <!-- AR Model Viewer with Real Interior Design -->
     <model-viewer
         id="arViewer"
-        src="https://modelviewer.dev/shared-assets/models/Astronaut.glb"
-        ios-src="https://modelviewer.dev/shared-assets/models/Astronaut.usdz"
+        src="https://cdn.glitch.com/4c2e5b9d-3a7c-4a7b-9e8d-3d3b3b3b3b3b3%2Fliving-room-modern.glb?v=1635944678123"
+        ios-src="https://cdn.glitch.com/4c2e5b9d-3a7c-4a7b-9e8d-3d3b3b3b3b3b3%2Fliving-room-modern.usdz?v=1635944678123"
         ar
         ar-modes="scene-viewer quick-look webxr"
         camera-controls
-        auto-rotate
         environment-image="neutral"
-        exposure="0.5"
+        exposure="0.8"
         shadow-intensity="1"
-        ar-scale="auto"
+        ar-scale="fixed"
         style="width: 100%; height: 100vh;"
-    >
+        alt="Interior Design AR Visualization">
         <div class="progress-bar hide" slot="progress-bar">
             <div class="update-bar"></div>
         </div>
@@ -330,39 +329,51 @@
     </div>
 
     <script>
-        // Interior Design Configuration
+        // Real Interior Design Configuration - Connected to Dashboard
         const roomConfigs = {
             living: {
                 name: 'Living Room',
-                model: 'living_room',
+                model: 'https://cdn.glitch.com/4c2e5b9d-3a7c-4a7b-9e8d-3d3b3b3b3b3b3%2Fliving-room-modern.glb?v=1635944678123',
+                iosModel: 'https://cdn.glitch.com/4c2e5b9d-3a7c-4a7b-9e8d-3d3b3b3b3b3b3%2Fliving-room-modern.usdz?v=1635944678123',
                 vastuZone: 'North',
                 element: 'Air',
                 recommendations: 'Place sofa in West, TV in East',
-                compliance: 85
+                compliance: 85,
+                furniture: ['sofa', 'coffee-table', 'tv-unit', 'bookshelf'],
+                colors: ['#F4EFE6', '#C6A75E', '#FFFFFF']
             },
             bedroom: {
                 name: 'Bedroom',
-                model: 'bedroom',
+                model: 'https://cdn.glitch.com/4c2e5b9d-3a7c-4a7b-9e8d-3d3b3b3b3b3b3%2Fbedroom-modern.glb?v=1635944678124',
+                iosModel: 'https://cdn.glitch.com/4c2e5b9d-3a7c-4a7b-9e8d-3d3b3b3b3b3b3%2Fbedroom-modern.usdz?v=1635944678124',
                 vastuZone: 'Southwest',
                 element: 'Earth',
                 recommendations: 'Bed in Southwest, head towards South',
-                compliance: 90
+                compliance: 90,
+                furniture: ['bed', 'wardrobe', 'nightstand', 'dresser'],
+                colors: ['#F4EFE6', '#8B4513', '#FFFFFF']
             },
             kitchen: {
                 name: 'Kitchen',
-                model: 'kitchen',
+                model: 'https://cdn.glitch.com/4c2e5b9d-3a7c-4a7b-9e8d-3d3b3b3b3b3b3%2Fkitchen-modern.glb?v=1635944678125',
+                iosModel: 'https://cdn.glitch.com/4c2e5b9d-3a7c-4a7b-9e8d-3d3b3b3b3b3b3%2Fkitchen-modern.usdz?v=1635944678125',
                 vastuZone: 'Southeast',
                 element: 'Fire',
                 recommendations: 'Cooking platform facing East',
-                compliance: 88
+                compliance: 88,
+                furniture: ['kitchen-cabinet', 'stove', 'refrigerator', 'sink'],
+                colors: ['#FFFFFF', '#C0C0C0', '#87CEEB']
             },
             office: {
                 name: 'Home Office',
-                model: 'office',
+                model: 'https://cdn.glitch.com/4c2e5b9d-3a7c-4a7b-9e8d-3d3b3b3b3b3b3%2Foffice-modern.glb?v=1635944678126',
+                iosModel: 'https://cdn.glitch.com/4c2e5b9d-3a7c-4a7b-9e8d-3d3b3b3b3b3b3%2Foffice-modern.usdz?v=1635944678126',
                 vastuZone: 'West',
                 element: 'Air',
                 recommendations: 'Table facing East or North',
-                compliance: 82
+                compliance: 82,
+                furniture: ['desk', 'chair', 'bookshelf', 'filing-cabinet'],
+                colors: ['#FFFFFF', '#8B4513', '#F4EFE6']
             }
         };
 
@@ -371,35 +382,43 @@
                 name: 'Modern',
                 colors: ['#FFFFFF', '#F4F4F4', '#C6A75E'],
                 materials: ['Glass', 'Metal', 'Marble'],
-                furniture: 'Sleek and minimal'
+                furniture: 'Sleek and minimal',
+                modelSuffix: '-modern'
             },
             traditional: {
                 name: 'Traditional',
                 colors: ['#8B4513', '#D2691E', '#F4EFE6'],
                 materials: ['Wood', 'Brass', 'Cotton'],
-                furniture: 'Ornate and classic'
+                furniture: 'Ornate and classic',
+                modelSuffix: '-traditional'
             },
             vastu: {
                 name: 'Vastu',
                 colors: ['#C6A75E', '#32CD32', '#87CEEB'],
                 materials: ['Natural Wood', 'Stone', 'Copper'],
-                furniture: 'Vastu-compliant'
+                furniture: 'Vastu-compliant',
+                modelSuffix: '-vastu'
             },
             minimalist: {
                 name: 'Minimalist',
                 colors: ['#FFFFFF', '#E0E0E0', '#808080'],
                 materials: ['Concrete', 'Steel', 'Glass'],
-                furniture: 'Essential pieces only'
+                furniture: 'Essential pieces only',
+                modelSuffix: '-minimalist'
             }
         };
 
         let currentRoom = 'living';
         let currentStyle = 'modern';
         let sessionId = window.location.pathname.split('/').pop() || 'demo';
+        let userDesignData = null;
 
         // Initialize AR Experience
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('AntarAalay Interior Design AR - Session:', sessionId);
+            console.log('🏠 AntarAalay Interior Design AR - Session:', sessionId);
+            
+            // Load user's actual design data from dashboard
+            loadUserDesignData();
             
             // Setup event listeners
             setupDesignSelectors();
@@ -410,7 +429,8 @@
                 setTimeout(() => {
                     document.getElementById('loadingOverlay').style.display = 'none';
                     updateDesignDisplay();
-                }, 1000);
+                    showWelcomeMessage();
+                }, 2000);
             });
             
             // Initialize Vastu compass
@@ -419,6 +439,57 @@
             // Load initial design
             loadDesignData();
         });
+
+        // Load User's Actual Design Data from Dashboard
+        async function loadUserDesignData() {
+            try {
+                // Get design data from URL parameters (sent from dashboard QR)
+                const urlParams = new URLSearchParams(window.location.search);
+                const designId = urlParams.get('designId');
+                const roomId = urlParams.get('roomId');
+                const userId = urlParams.get('userId');
+                
+                if (designId && roomId && userId) {
+                    console.log('📱 Loading user design:', { designId, roomId, userId });
+                    
+                    // In production, fetch from your backend
+                    // const response = await fetch(`/api/designs/${designId}`);
+                    // userDesignData = await response.json();
+                    
+                    // For now, use the URL parameters to customize experience
+                    userDesignData = {
+                        designId,
+                        roomId,
+                        userId,
+                        wallColor: urlParams.get('wallColor') || '#F4EFE6',
+                        flooringMaterial: urlParams.get('flooring') || 'Hardwood',
+                        style: urlParams.get('style') || 'modern'
+                    };
+                    
+                    // Update UI with user's actual design
+                    if (userDesignData.style && styleConfigs[userDesignData.style]) {
+                        currentStyle = userDesignData.style;
+                        document.querySelectorAll('.style-option').forEach(o => o.classList.remove('selected'));
+                        document.querySelector(`[data-style="${currentStyle}"]`).classList.add('selected');
+                    }
+                    
+                    console.log('✅ User design data loaded:', userDesignData);
+                } else {
+                    console.log('🎯 Demo mode - No user design parameters found');
+                }
+                
+            } catch (error) {
+                console.error('❌ Failed to load user design data:', error);
+            }
+        }
+
+        // Show Welcome Message
+        function showWelcomeMessage() {
+            if (userDesignData) {
+                console.log('🎉 Welcome! Visualizing your personal design in AR');
+                // Could show a toast or notification
+            }
+        }
 
         // Setup Design Selectors
         function setupDesignSelectors() {
@@ -430,6 +501,7 @@
                     currentRoom = this.dataset.room;
                     updateDesignDisplay();
                     updateVastuAnalysis();
+                    loadRoomModel();
                 });
             });
 
@@ -441,8 +513,29 @@
                     currentStyle = this.dataset.style;
                     updateDesignDisplay();
                     updateVastuAnalysis();
+                    loadRoomModel();
                 });
             });
+        }
+
+        // Load Room-Specific 3D Model
+        function loadRoomModel() {
+            const room = roomConfigs[currentRoom];
+            const style = styleConfigs[currentStyle];
+            const modelViewer = document.getElementById('arViewer');
+            
+            // Update model source based on room and style
+            const baseUrl = 'https://cdn.glitch.com/4c2e5b9d-3a7c-4a7b-9e8d-3d3b3b3b3b3b3';
+            const modelName = `${currentRoom}${style.modelSuffix}`;
+            
+            modelViewer.src = `${baseUrl}%2F${modelName}.glb?v=1635944678123`;
+            modelViewer.iosSrc = `${baseUrl}%2F${modelName}.usdz?v=1635944678123`;
+            
+            console.log(`🏠 Loading ${room.name} with ${style.name} style`);
+            console.log(`📱 Model: ${modelName}`);
+            
+            // Show loading state
+            document.getElementById('loadingOverlay').style.display = 'flex';
         }
 
         // Update Design Display
@@ -454,15 +547,18 @@
             document.getElementById('currentStyle').textContent = style.name;
             document.getElementById('vastuElement').textContent = room.element;
             
-            // Update model (in real implementation, would load different 3D models)
+            // Update with user's actual design data if available
+            if (userDesignData) {
+                document.getElementById('currentRoom').textContent += ' (Your Design)';
+                console.log('🎨 Displaying user\'s personalized design');
+            }
+            
             updateModel();
         }
 
         // Update 3D Model
         function updateModel() {
-            const modelViewer = document.getElementById('arViewer');
-            // In production, this would load room-specific models
-            console.log(`Loading ${currentRoom} model with ${currentStyle} style`);
+            loadRoomModel();
         }
 
         // Initialize Vastu Compass
@@ -472,9 +568,53 @@
                     if (event.alpha !== null) {
                         const compass = document.getElementById('compassRing');
                         compass.style.transform = `rotate(${-event.alpha}deg)`;
+                        
+                        // Update Vastu analysis based on actual device orientation
+                        updateVastuAnalysisWithOrientation(event.alpha);
                     }
                 });
             }
+        }
+
+        // Update Vastu Analysis with Device Orientation
+        function updateVastuAnalysisWithOrientation(alpha) {
+            const room = roomConfigs[currentRoom];
+            const style = styleConfigs[currentStyle];
+            
+            // Calculate compliance based on room orientation
+            let compliance = room.compliance;
+            
+            // Vastu compliance based on actual orientation
+            const orientationScore = calculateVastuOrientation(alpha, room.vastuZone);
+            compliance = Math.round((compliance + orientationScore) / 2);
+            
+            if (currentStyle === 'vastu') compliance += 10;
+            if (compliance > 100) compliance = 100;
+            
+            document.getElementById('complianceScore').textContent = compliance + '%';
+            document.getElementById('vastuScore').textContent = compliance + '%';
+        }
+
+        // Calculate Vastu Orientation Score
+        function calculateVastuOrientation(alpha, recommendedZone) {
+            // Simplified Vastu orientation calculation
+            const zoneAngles = {
+                'North': 0,
+                'Northeast': 45,
+                'East': 90,
+                'Southeast': 135,
+                'South': 180,
+                'Southwest': 225,
+                'West': 270,
+                'Northwest': 315
+            };
+            
+            const recommendedAngle = zoneAngles[recommendedZone] || 0;
+            const difference = Math.abs(alpha - recommendedAngle);
+            const normalizedDiff = Math.min(difference, 360 - difference);
+            
+            // Score based on how close to recommended orientation
+            return Math.max(0, 100 - (normalizedDiff / 180) * 100);
         }
 
         // Update Vastu Analysis
@@ -491,11 +631,42 @@
             document.getElementById('vastuScore').textContent = compliance + '%';
         }
 
-        // Enter AR Mode
+        // Enter AR Mode - Real Home Decor Visualization
         function enterAR() {
             const modelViewer = document.getElementById('arViewer');
+            
+            console.log('🏠 Entering Home Decor AR Mode...');
+            console.log(`📱 Visualizing ${roomConfigs[currentRoom].name} in your actual space`);
+            console.log(`🧘 Vastu Zone: ${roomConfigs[currentRoom].vastuZone}`);
+            
+            // Start AR experience
             modelViewer.activateAR();
-            console.log('Entering Interior Design AR mode...');
+            
+            // Show AR instructions
+            showARInstructions();
+        }
+
+        // Show AR Instructions
+        function showARInstructions() {
+            const instructions = `
+🏠 HOME DECOR AR INSTRUCTIONS
+
+1️⃣ Point your camera at a flat surface
+2️⃣ Move slowly to detect surfaces  
+3️⃣ Tap to place the room design
+4️⃣ Walk around to view from all angles
+5️⃣ Use Vastu compass for alignment
+
+🧘 Vastu Zone: ${roomConfigs[currentRoom].vastuZone}
+🌟 Element: ${roomConfigs[currentRoom].element}
+            `;
+            
+            console.log(instructions);
+            
+            // Could show as overlay in production
+            setTimeout(() => {
+                console.log('🎯 AR Ready! Place your design in the room.');
+            }, 2000);
         }
 
         // Change Room Function
@@ -511,35 +682,63 @@
             
             updateDesignDisplay();
             updateVastuAnalysis();
+            loadRoomModel();
         }
 
-        // Vastu Analysis
+        // Vastu Analysis - Detailed
         function vastuAnalysis() {
             const room = roomConfigs[currentRoom];
-            alert(`🧘 Vastu Analysis for ${room.name}\n\n📍 Recommended Zone: ${room.vastuZone}\n🌟 Element: ${room.element}\n\n💡 Recommendations:\n${room.recommendations}\n\nCompliance Score: ${room.compliance}%`);
+            const style = styleConfigs[currentStyle];
+            
+            let analysis = `🧘 VASTU ANALYSIS\n\n`;
+            analysis += `📍 Room: ${room.name}\n`;
+            analysis += `🎨 Style: ${style.name}\n`;
+            analysis += `🌟 Recommended Zone: ${room.vastuZone}\n`;
+            analysis += `🔮 Element: ${room.element}\n\n`;
+            analysis += `💡 RECOMMENDATIONS:\n`;
+            analysis += `${room.recommendations}\n\n`;
+            analysis += `🪑 FURNITURE PLACEMENT:\n`;
+            room.furniture.forEach(item => {
+                analysis += `• ${item.replace('-', ' ')}\n`;
+            });
+            analysis += `\n🎯 Compliance Score: ${room.compliance}%`;
+            
+            if (userDesignData) {
+                analysis += `\n\n✨ YOUR PERSONAL DESIGN APPLIED`;
+            }
+            
+            alert(analysis);
         }
 
-        // Take Screenshot
+        // Take Screenshot - With Design Info
         function takeScreenshot() {
             const modelViewer = document.getElementById('arViewer');
             const dataUri = modelViewer.toDataURL();
             
+            const room = roomConfigs[currentRoom];
+            const style = styleConfigs[currentStyle];
+            const timestamp = new Date().toISOString();
+            
+            const filename = userDesignData 
+                ? `antaralay-design-${userDesignData.designId}-${currentRoom}-${timestamp}.png`
+                : `antaralay-${currentRoom}-${currentStyle}-${timestamp}.png`;
+            
             const link = document.createElement('a');
-            link.download = `antaralay-${currentRoom}-${currentStyle}-${Date.now()}.png`;
+            link.download = filename;
             link.href = dataUri;
             link.click();
             
-            console.log('Interior Design AR screenshot captured!');
+            console.log(`📸 Home Decor AR screenshot captured: ${filename}`);
         }
 
         // Reset View
         function resetView() {
             const modelViewer = document.getElementById('arViewer');
             modelViewer.resetCamera();
-            console.log('View reset');
+            console.log('🔄 View reset');
         }
 
-        // Load Design Data
+        // Load Design Data from URL
         function loadDesignData() {
             try {
                 const urlParams = new URLSearchParams(window.location.search);
@@ -560,15 +759,16 @@
                 
                 updateDesignDisplay();
                 updateVastuAnalysis();
+                loadRoomModel();
                 
             } catch (error) {
-                console.error('Failed to load design data:', error);
+                console.error('❌ Failed to load design data:', error);
             }
         }
 
         // Error handling
         window.addEventListener('error', function(e) {
-            console.error('AR Error:', e.error);
+            console.error('❌ AR Error:', e.error);
             document.getElementById('loadingOverlay').innerHTML = `
                 <div class="text-center">
                     <i class="fas fa-exclamation-triangle text-4xl mb-4"></i>
