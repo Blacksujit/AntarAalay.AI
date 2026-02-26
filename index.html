@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AntarAalay - AR Home Decor Visualization</title>
-    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
-    <script src="https://unpkg.com/@webxr-input-profiles/motion-controllers@1.0.0/dist/motion-controllers.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@google/model-viewer@3.0.1/dist/model-viewer.min.js" type="module"></script>
     <style>
         * {
             margin: 0;
@@ -17,15 +15,28 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             overflow: hidden;
+            background: #f0f0f0;
         }
         
-        .ar-controls {
+        .ar-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+        
+        model-viewer {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .controls {
             position: fixed;
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
             background: rgba(0, 0, 0, 0.8);
-            padding: 15px 20px;
+            padding: 15px;
             border-radius: 15px;
             display: flex;
             gap: 10px;
@@ -33,7 +44,7 @@
             backdrop-filter: blur(10px);
         }
         
-        .ar-btn {
+        .control-btn {
             background: #C6A75E;
             color: white;
             border: none;
@@ -45,16 +56,12 @@
             transition: all 0.3s ease;
         }
         
-        .ar-btn:hover {
+        .control-btn:hover {
             background: #B8941F;
             transform: translateY(-2px);
         }
         
-        .ar-btn:active {
-            transform: translateY(0);
-        }
-        
-        .room-info {
+        .info-panel {
             position: fixed;
             top: 20px;
             left: 20px;
@@ -67,13 +74,13 @@
             max-width: 250px;
         }
         
-        .room-info h3 {
+        .info-panel h3 {
             margin-bottom: 10px;
             color: #C6A75E;
             font-size: 16px;
         }
         
-        .room-info p {
+        .info-panel p {
             margin: 5px 0;
             font-size: 14px;
             opacity: 0.9;
@@ -104,6 +111,35 @@
             border: 2px solid #FF6347;
         }
         
+        .error-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(220, 53, 69, 0.9);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            z-index: 2000;
+            text-align: center;
+            max-width: 300px;
+        }
+        
+        .error-message h3 {
+            margin-bottom: 10px;
+        }
+        
+        .error-message button {
+            background: white;
+            color: #dc3545;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 15px;
+            font-weight: 600;
+        }
+        
         .loading {
             position: fixed;
             top: 0;
@@ -116,8 +152,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            z-index: 2000;
-            backdrop-filter: blur(10px);
+            z-index: 3000;
         }
         
         .loading.hidden {
@@ -138,46 +173,6 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        
-        .instructions {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.9);
-            color: white;
-            padding: 30px;
-            border-radius: 15px;
-            z-index: 1500;
-            max-width: 400px;
-            text-align: center;
-            backdrop-filter: blur(10px);
-        }
-        
-        .instructions.hidden {
-            display: none;
-        }
-        
-        .instructions h2 {
-            margin-bottom: 20px;
-            color: #C6A75E;
-        }
-        
-        .instructions p {
-            margin: 10px 0;
-            line-height: 1.5;
-        }
-        
-        .instructions button {
-            background: #C6A75E;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-            margin-top: 20px;
-        }
     </style>
 </head>
 <body>
@@ -188,194 +183,35 @@
         <p>Preparing your Vastu-compliant space</p>
     </div>
     
-    <!-- Instructions -->
-    <div id="instructions" class="instructions">
-        <h2>🏠 AR Home Decor Setup</h2>
-        <p><strong>Step 1:</strong> Allow camera access</p>
-        <p><strong>Step 2:</strong> Point camera at a flat surface</p>
-        <p><strong>Step 3:</strong> Tap to place furniture</p>
-        <p><strong>Step 4:</strong> Walk around to view from all angles</p>
-        <button onclick="startAR()">Start AR Experience</button>
+    <!-- Error Message -->
+    <div id="error-message" class="error-message" style="display: none;">
+        <h3>❌ AR Not Available</h3>
+        <p>Your device doesn't support AR or camera access was denied.</p>
+        <p>You can still view the 3D furniture in regular mode.</p>
+        <button onclick="continueWithoutAR()">Continue Without AR</button>
     </div>
     
-    <!-- AR Scene -->
-    <a-scene 
-        id="ar-scene"
-        embedded 
-        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
-        vr-mode-ui="enabled: false">
-        
-        <!-- Camera -->
-        <a-camera gps-camera rotation-reader></a-camera>
-        
-        <!-- Light -->
-        <a-light type="ambient" color="#404040"></a-light>
-        <a-light type="directional" position="0 1 0" color="#ffffff" intensity="0.5"></a-light>
-        
-        <!-- Living Room Furniture -->
-        <a-entity id="living-room" visible="false">
-            <!-- Sofa -->
-            <a-box 
-                id="sofa" 
-                position="0 0.5 -2" 
-                width="2" 
-                height="0.8" 
-                depth="0.8" 
-                color="#8B4513"
-                shadow>
-                <a-animation attribute="rotation" dur="2000" to="0 360 0" repeat="indefinite"></a-animation>
-            </a-box>
-            
-            <!-- Coffee Table -->
-            <a-box 
-                id="coffee-table" 
-                position="0 0.3 -1" 
-                width="1.2" 
-                height="0.6" 
-                depth="0.6" 
-                color="#D2691E"
-                shadow>
-            </a-box>
-            
-            <!-- TV Unit -->
-            <a-box 
-                id="tv-unit" 
-                position="0 1 -3" 
-                width="1.8" 
-                height="0.1" 
-                depth="0.3" 
-                color="#000000"
-                shadow>
-            </a-box>
-            
-            <!-- Bookshelf -->
-            <a-box 
-                id="bookshelf" 
-                position="-2 1 -2" 
-                width="0.3" 
-                height="2" 
-                depth="1" 
-                color="#654321"
-                shadow>
-            </a-box>
-        </a-entity>
-        
-        <!-- Bedroom Furniture -->
-        <a-entity id="bedroom" visible="false">
-            <!-- Bed -->
-            <a-box 
-                id="bed" 
-                position="0 0.4 -2" 
-                width="1.6" 
-                height="0.8" 
-                depth="2" 
-                color="#F4EFE6"
-                shadow>
-            </a-box>
-            
-            <!-- Wardrobe -->
-            <a-box 
-                id="wardrobe" 
-                position="2 1 -2" 
-                width="0.6" 
-                height="2" 
-                depth="1" 
-                color="#8B4513"
-                shadow>
-            </a-box>
-            
-            <!-- Nightstand -->
-            <a-box 
-                id="nightstand" 
-                position="-1 0.4 -1" 
-                width="0.4" 
-                height="0.8" 
-                depth="0.4" 
-                color="#654321"
-                shadow>
-            </a-box>
-        </a-entity>
-        
-        <!-- Kitchen Furniture -->
-        <a-entity id="kitchen" visible="false">
-            <!-- Kitchen Cabinet -->
-            <a-box 
-                id="kitchen-cabinet" 
-                position="0 1 -2" 
-                width="2" 
-                height="2" 
-                depth="0.6" 
-                color="#F5F5DC"
-                shadow>
-            </a-box>
-            
-            <!-- Stove -->
-            <a-box 
-                id="stove" 
-                position="0 1 -1.5" 
-                width="0.8" 
-                height="0.1" 
-                depth="0.8" 
-                color="#C0C0C0"
-                shadow>
-            </a-box>
-            
-            <!-- Refrigerator -->
-            <a-box 
-                id="refrigerator" 
-                position="1.5 1 -2" 
-                width="0.6" 
-                height="2" 
-                depth="0.6" 
-                color="#FFFFFF"
-                shadow>
-            </a-box>
-        </a-entity>
-        
-        <!-- Office Furniture -->
-        <a-entity id="office" visible="false">
-            <!-- Desk -->
-            <a-box 
-                id="desk" 
-                position="0 0.8 -1" 
-                width="1.2" 
-                height="0.1" 
-                depth="0.6" 
-                color="#8B4513"
-                shadow>
-            </a-box>
-            
-            <!-- Chair -->
-            <a-box 
-                id="chair" 
-                position="0 0.5 -0.5" 
-                width="0.5" 
-                height="1" 
-                depth="0.5" 
-                color="#654321"
-                shadow>
-            </a-box>
-            
-            <!-- Bookshelf -->
-            <a-box 
-                id="office-bookshelf" 
-                position="-1.5 1 -1.5" 
-                width="0.3" 
-                height="2" 
-                depth="0.8" 
-                color="#8B4513"
-                shadow>
-            </a-box>
-        </a-entity>
-        
-        <!-- Floor Marker -->
-        <a-marker preset="hiro">
-            <a-plane position="0 0 0" rotation="-90 0 0" width="4" height="4" color="#CCCCCC" opacity="0.3"></a-plane>
-        </a-marker>
-    </a-scene>
+    <!-- AR Container -->
+    <div class="ar-container">
+        <model-viewer
+            id="ar-viewer"
+            src="https://modelviewer.dev/shared-assets/models/Astronaut.glb"
+            ios-src="https://modelviewer.dev/shared-assets/models/Astronaut.usdz"
+            ar
+            ar-modes="scene-viewer quick-look webxr"
+            camera-controls
+            environment-image="neutral"
+            exposure="0.8"
+            shadow-intensity="1"
+            ar-scale="auto"
+            style="width: 100%; height: 100vh;"
+            alt="Home Decor AR Visualization"
+            ar-placement="floor">
+        </model-viewer>
+    </div>
     
-    <!-- Room Info Panel -->
-    <div class="room-info">
+    <!-- Info Panel -->
+    <div class="info-panel">
         <h3 id="room-name">Living Room</h3>
         <p><strong>Style:</strong> <span id="room-style">Modern</span></p>
         <p><strong>Vastu Zone:</strong> <span id="vastu-zone">North</span></p>
@@ -389,12 +225,12 @@
         <p id="vastu-status">Excellent</p>
     </div>
     
-    <!-- AR Controls -->
-    <div class="ar-controls">
-        <button class="ar-btn" onclick="changeRoom()">🏠 Change Room</button>
-        <button class="ar-btn" onclick="changeStyle()">🎨 Change Style</button>
-        <button class="ar-btn" onclick="checkVastu()">🧘 Vastu Check</button>
-        <button class="ar-btn" onclick="takeScreenshot()">📸 Screenshot</button>
+    <!-- Controls -->
+    <div class="controls">
+        <button class="control-btn" onclick="changeRoom()">🏠 Change Room</button>
+        <button class="control-btn" onclick="changeStyle()">🎨 Change Style</button>
+        <button class="control-btn" onclick="checkVastu()">🧘 Vastu Check</button>
+        <button class="control-btn" onclick="takeScreenshot()">📸 Screenshot</button>
     </div>
     
     <script>
@@ -406,7 +242,8 @@
                 vastuZone: 'North',
                 element: 'Air',
                 score: 85,
-                furniture: ['sofa', 'coffee-table', 'tv-unit', 'bookshelf']
+                model: 'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
+                iosModel: 'https://modelviewer.dev/shared-assets/models/Astronaut.usdz'
             },
             bedroom: {
                 name: 'Bedroom',
@@ -414,7 +251,8 @@
                 vastuZone: 'Southwest',
                 element: 'Earth',
                 score: 90,
-                furniture: ['bed', 'wardrobe', 'nightstand']
+                model: 'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
+                iosModel: 'https://modelviewer.dev/shared-assets/models/Astronaut.usdz'
             },
             kitchen: {
                 name: 'Kitchen',
@@ -422,7 +260,8 @@
                 vastuZone: 'Southeast',
                 element: 'Fire',
                 score: 88,
-                furniture: ['kitchen-cabinet', 'stove', 'refrigerator']
+                model: 'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
+                iosModel: 'https://modelviewer.dev/shared-assets/models/Astronaut.usdz'
             },
             office: {
                 name: 'Home Office',
@@ -430,7 +269,8 @@
                 vastuZone: 'West',
                 element: 'Air',
                 score: 82,
-                furniture: ['desk', 'chair', 'office-bookshelf']
+                model: 'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
+                iosModel: 'https://modelviewer.dev/shared-assets/models/Astronaut.usdz'
             }
         };
         
@@ -456,48 +296,91 @@
             const params = getUrlParams();
             console.log('📱 User parameters:', params);
             
-            // Hide loading immediately
+            // Hide loading after 1 second
             setTimeout(() => {
                 document.getElementById('loading').classList.add('hidden');
-                document.getElementById('instructions').classList.remove('hidden');
-            }, 1000); // 1 second loading
+                checkARSupport();
+            }, 1000);
             
             // Show initial room
             showRoom(currentRoom);
             updateVastuIndicator();
+            
+            // Setup model viewer event listeners
+            setupModelViewerEvents();
         }
         
-        // Start AR
-        function startAR() {
-            console.log('🚀 Starting AR Experience...');
-            document.getElementById('instructions').classList.add('hidden');
+        // Check AR Support
+        function checkARSupport() {
+            const modelViewer = document.getElementById('ar-viewer');
             
-            // Request camera permissions
-            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                navigator.mediaDevices.getUserMedia({ video: true })
-                    .then(() => {
-                        console.log('✅ Camera access granted');
-                        // AR.js will handle the rest
-                    })
-                    .catch((error) => {
-                        console.error('❌ Camera access denied:', error);
-                        alert('Camera access is required for AR experience');
-                    });
+            // Check if WebXR is supported
+            if (!navigator.xr) {
+                console.log('❌ WebXR not supported');
+                showErrorMessage();
+                return;
             }
+            
+            // Check if AR is supported
+            navigator.xr.isSessionSupported('immersive-ar')
+                .then((supported) => {
+                    if (!supported) {
+                        console.log('❌ AR not supported');
+                        showErrorMessage();
+                    } else {
+                        console.log('✅ AR supported');
+                    }
+                })
+                .catch((error) => {
+                    console.log('❌ Error checking AR support:', error);
+                    showErrorMessage();
+                });
+        }
+        
+        // Show error message
+        function showErrorMessage() {
+            document.getElementById('error-message').style.display = 'block';
+        }
+        
+        // Continue without AR
+        function continueWithoutAR() {
+            document.getElementById('error-message').style.display = 'none';
+            console.log('📱 Continuing without AR - 3D mode only');
+        }
+        
+        // Setup model viewer events
+        function setupModelViewerEvents() {
+            const modelViewer = document.getElementById('ar-viewer');
+            
+            modelViewer.addEventListener('load', () => {
+                console.log('✅ Model loaded successfully');
+            });
+            
+            modelViewer.addEventListener('error', (event) => {
+                console.error('❌ Model loading error:', event);
+                showErrorMessage();
+            });
+            
+            modelViewer.addEventListener('ar-status', (event) => {
+                console.log('🎯 AR Status:', event.detail.status);
+                
+                if (event.detail.status === 'failed') {
+                    console.log('❌ AR failed');
+                    showErrorMessage();
+                }
+            });
         }
         
         // Show room
         function showRoom(roomId) {
-            // Hide all rooms
-            Object.keys(rooms).forEach(room => {
-                document.getElementById(room).setAttribute('visible', 'false');
-            });
+            const room = rooms[roomId];
+            const modelViewer = document.getElementById('ar-viewer');
             
-            // Show selected room
-            document.getElementById(roomId).setAttribute('visible', 'true');
+            // Update model
+            modelViewer.src = room.model;
+            modelViewer.iosSrc = room.iosModel;
             
             // Update info panel
-            const room = rooms[roomId];
             document.getElementById('room-name').textContent = room.name;
             document.getElementById('room-style').textContent = room.style;
             document.getElementById('vastu-zone').textContent = room.vastuZone;
@@ -565,13 +448,20 @@
         
         // Take screenshot
         function takeScreenshot() {
-            const canvas = document.createElement('canvas');
-            const scene = document.getElementById('ar-scene');
+            const modelViewer = document.getElementById('ar-viewer');
             
-            // Simple screenshot simulation
-            alert('📸 Screenshot captured! In production, this would save an image of your AR room design.');
-            
-            console.log('📸 Screenshot captured');
+            try {
+                const dataUri = modelViewer.toDataURL();
+                const link = document.createElement('a');
+                link.download = `antaralay-ar-${currentRoom}-${Date.now()}.png`;
+                link.href = dataUri;
+                link.click();
+                
+                console.log('📸 Screenshot captured');
+            } catch (error) {
+                console.error('❌ Screenshot failed:', error);
+                alert('Screenshot not available on this device');
+            }
         }
         
         // Handle device orientation for Vastu
@@ -579,7 +469,6 @@
             window.addEventListener('deviceorientation', function(event) {
                 const alpha = event.alpha;
                 if (alpha !== null) {
-                    // Update Vastu based on device orientation
                     const room = rooms[currentRoom];
                     const zoneScore = calculateVastuScore(alpha, room.vastuZone);
                     
@@ -612,11 +501,10 @@
         // Initialize on load
         window.addEventListener('load', initAR);
         
-        // Handle errors
+        // Handle errors gracefully
         window.addEventListener('error', function(e) {
             console.error('❌ AR Error:', e.error);
-            document.getElementById('loading').classList.add('hidden');
-            alert('AR experience encountered an error. Please refresh and try again.');
+            showErrorMessage();
         });
     </script>
 </body>
