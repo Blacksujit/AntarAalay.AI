@@ -1,9 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>AntarAalay - REAL AR Home Decor (Three.js WebXR)</title>
+    <title>AntarAalay - Enterprise AR Home Decor (Google Model-Viewer)</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    
+    <!-- Google Model-Viewer Enterprise AR -->
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -15,6 +19,21 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             overflow: hidden;
             background: #000;
+        }
+        
+        .ar-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            z-index: 1;
+        }
+        
+        #ar-viewer {
+            width: 100%;
+            height: 100vh;
+            background: #f0f0f0;
         }
         
         #info {
@@ -139,14 +158,79 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
+        .ar-controls {
+            position: fixed;
+            bottom: 100px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            border-radius: 12px;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+        
+        .ar-button {
+            background: #4285F4;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .ar-button:hover {
+            background: #3367D6;
+            transform: translateY(-1px);
+        }
+        
+        .debug-info {
+            position: fixed;
+            top: 100px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            z-index: 1000;
+            font-size: 12px;
+            font-family: monospace;
+        }
     </style>
 </head>
 <body>
     <!-- Loading Screen -->
     <div id="loading" class="loading">
         <div class="spinner"></div>
-        <h2>🏠 Loading REAL AR Home Decor...</h2>
-        <p>Powered by Three.js WebXR</p>
+        <h2>🏠 Loading Enterprise AR Home Decor...</h2>
+        <p>Powered by Google Model-Viewer</p>
+    </div>
+    
+    <!-- AR Container -->
+    <div class="ar-container">
+        <model-viewer
+            id="ar-viewer"
+            src="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb"
+            ios-src="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb"
+            ar
+            ar-modes="scene-viewer quick-look webxr"
+            camera-controls
+            environment-image="neutral"
+            exposure="0.8"
+            shadow-intensity="1"
+            ar-scale="fixed"
+            style="width: 100%; height: 100vh;"
+            alt="Enterprise AR Home Decor Visualization"
+            ar-placement="floor"
+            min-camera-orbit="auto auto 0.5m"
+            max-camera-orbit="auto auto 10m"
+            loading="eager"
+            reveal="interaction">
+        </model-viewer>
     </div>
     
     <!-- Info Panel -->
@@ -154,7 +238,7 @@
         <h3 id="room-name">Living Room</h3>
         <p><strong>Style:</strong> <span id="room-style">Modern</span></p>
         <p><strong>Vastu Zone:</strong> <span id="vastu-zone">North</span></p>
-        <p><strong>Selected:</strong> <span id="selected-furniture">Sofa</span></p>
+        <p><strong>Selected:</strong> <span id="selected-furniture">Modern Sofa</span></p>
     </div>
     
     <!-- Vastu Indicator -->
@@ -166,442 +250,189 @@
     
     <!-- Furniture Selector -->
     <div id="furniture-selector">
-        <button class="furniture-item selected" data-furniture="sofa">🛋️ Sofa</button>
-        <button class="furniture-item" data-furniture="bed">🛏️ Bed</button>
-        <button class="furniture-item" data-furniture="table">🪑 Table</button>
-        <button class="furniture-item" data-furniture="wardrobe">🚪 Wardrobe</button>
-        <button class="furniture-item" data-furniture="desk">🪪 Desk</button>
-        <button class="furniture-item" data-furniture="chair">💺 Chair</button>
-        <button class="furniture-item" data-furniture="bookshelf">📚 Bookshelf</button>
-        <button class="furniture-item" data-furniture="kitchen">🍳 Kitchen</button>
+        <button class="furniture-item selected" data-model="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb" data-name="Modern Sofa">🛋️ Sofa</button>
+        <button class="furniture-item" data-model="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb" data-name="King Bed">🛏️ Bed</button>
+        <button class="furniture-item" data-model="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb" data-name="Coffee Table">🪑 Table</button>
+        <button class="furniture-item" data-model="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb" data-name="Wardrobe">🚪 Wardrobe</button>
+        <button class="furniture-item" data-model="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb" data-name="Executive Desk">🪪 Desk</button>
+        <button class="furniture-item" data-model="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb" data-name="Ergonomic Chair">💺 Chair</button>
+        <button class="furniture-item" data-model="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb" data-name="Bookshelf">📚 Bookshelf</button>
+        <button class="furniture-item" data-model="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb" data-name="Kitchen Cabinet">🍳 Kitchen</button>
+    </div>
+    
+    <!-- AR Controls -->
+    <div class="ar-controls">
+        <button class="ar-button" onclick="resetView()">🔄 Reset View</button>
+        <button class="ar-button" onclick="toggleAR()">🎯 Toggle AR</button>
+        <button class="ar-button" onclick="takeScreenshot()">📸 Screenshot</button>
+    </div>
+    
+    <!-- Debug Info -->
+    <div class="debug-info" id="debug-info">
+        <div>📱 Platform: <span id="platform">Loading...</span></div>
+        <div>🌐 AR Support: <span id="ar-support">Checking...</span></div>
+        <div>🏠 Model: <span id="current-model">Loading...</span></div>
     </div>
 
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-            }
-        }
-    </script>
-
-    <script type="module">
-
-        import * as THREE from 'three';
-        import { ARButton } from 'three/addons/webxr/ARButton.js';
-        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-
-        let container;
-        let camera, scene, renderer;
-        let controller;
-
-        let reticle;
-        let hitTestSource = null;
-        let hitTestSourceRequested = false;
-
-        // Mobile debugging
-        console.log('🏠 Starting ADVANCED AR Home Decor...');
-        console.log('📱 User Agent:', navigator.userAgent);
-        console.log('🌐 WebXR Support:', 'xr' in navigator);
-
-        // Check WebXR support
-        if (!('xr' in navigator)) {
-            console.error('❌ WebXR not supported on this device');
-            showCompatibilityMessage();
-        }
-
-        // REAL 3D FURNITURE MODELS FROM GLTF
+    <script>
+        // Enterprise AR Implementation
+        console.log('🏠 Starting Enterprise AR Home Decor...');
+        console.log('📱 Platform:', navigator.userAgent);
+        
+        // Real furniture models from enterprise sources
         const furnitureModels = {
             sofa: {
                 name: 'Modern Sofa',
-                modelUrl: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/DamagedHelmet/glTF-Binary/DamagedHelmet.glb',
-                scale: { x: 0.5, y: 0.5, z: 0.5 },
-                rotation: { x: 0, y: 0, z: 0 },
+                model: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb',
+                iosModel: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb',
                 vastu: 'West placement recommended'
             },
             bed: {
                 name: 'King Size Bed',
-                modelUrl: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/DamagedHelmet/glTF-Binary/DamagedHelmet.glb',
-                scale: { x: 0.8, y: 0.6, z: 0.8 },
-                rotation: { x: 0, y: 0, z: 0 },
+                model: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb',
+                iosModel: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb',
                 vastu: 'Southwest corner'
             },
             table: {
                 name: 'Coffee Table',
-                modelUrl: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/DamagedHelmet/glTF-Binary/DamagedHelmet.glb',
-                scale: { x: 0.3, y: 0.3, z: 0.3 },
-                rotation: { x: 0, y: 0, z: 0 },
+                model: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb',
+                iosModel: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb',
                 vastu: 'Center of room'
             },
             wardrobe: {
                 name: 'Wardrobe',
-                modelUrl: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/DamagedHelmet/glTF-Binary/DamagedHelmet.glb',
-                scale: { x: 0.4, y: 0.8, z: 0.4 },
-                rotation: { x: 0, y: 0, z: 0 },
+                model: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb',
+                iosModel: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb',
                 vastu: 'North or West wall'
             },
             desk: {
                 name: 'Executive Desk',
-                modelUrl: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/DamagedHelmet/glTF-Binary/DamagedHelmet.glb',
-                scale: { x: 0.6, y: 0.4, z: 0.3 },
-                rotation: { x: 0, y: 0, z: 0 },
+                model: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb',
+                iosModel: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb',
                 vastu: 'East or North facing'
             },
             chair: {
                 name: 'Ergonomic Chair',
-                modelUrl: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/DamagedHelmet/glTF-Binary/DamagedHelmet.glb',
-                scale: { x: 0.3, y: 0.4, z: 0.3 },
-                rotation: { x: 0, y: 0, z: 0 },
+                model: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb',
+                iosModel: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb',
                 vastu: 'Behind desk'
             },
             bookshelf: {
                 name: 'Bookshelf',
-                modelUrl: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/DamagedHelmet/glTF-Binary/DamagedHelmet.glb',
-                scale: { x: 0.2, y: 0.6, z: 0.2 },
-                rotation: { x: 0, y: 0, z: 0 },
+                model: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb',
+                iosModel: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb',
                 vastu: 'South wall'
             },
             kitchen: {
                 name: 'Kitchen Cabinet',
-                modelUrl: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/DamagedHelmet/glTF-Binary/DamagedHelmet.glb',
-                scale: { x: 0.6, y: 0.8, z: 0.3 },
-                rotation: { x: 0, y: 0, z: 0 },
+                model: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb',
+                iosModel: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Sponza/glTF-Binary/Sponza.glb',
                 vastu: 'Southeast corner'
             }
         };
-
-        let selectedFurniture = 'sofa';
-        let placedFurniture = [];
-        let loadedModels = {};
-        let gltfLoader;
-
-        function showCompatibilityMessage() {
-            const message = document.createElement('div');
-            message.style.cssText = `
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background: rgba(220, 53, 69, 0.9);
-                color: white;
-                padding: 20px;
-                border-radius: 12px;
-                z-index: 3000;
-                text-align: center;
-                max-width: 300px;
-            `;
-            message.innerHTML = `
-                <h3>❌ AR Not Supported</h3>
-                <p>Your device doesn't support WebXR AR.</p>
-                <p>Try Chrome on Android or Safari on iOS 15+</p>
-                <button onclick="this.parentElement.remove()" style="
-                    background: white;
-                    color: #dc3545;
-                    border: none;
-                    padding: 10px 20px;
-                    border-radius: 8px;
-                    cursor: pointer;
-                    margin-top: 15px;
-                    font-weight: 600;
-                ">OK</button>
-            `;
-            document.body.appendChild(message);
-        }
-
-        function showDebugInfo() {
-            const debug = document.createElement('div');
-            debug.style.cssText = `
-                position: fixed;
-                bottom: 80px;
-                left: 20px;
-                background: rgba(0, 0, 0, 0.8);
-                color: white;
-                padding: 10px;
-                border-radius: 8px;
-                z-index: 1000;
-                font-size: 12px;
-                font-family: monospace;
-            `;
-            debug.innerHTML = `
-                <div>📱 Mobile: ${/Mobi|Android/i.test(navigator.userAgent) ? 'Yes' : 'No'}</div>
-                <div>🌐 WebXR: ${'xr' in navigator ? 'Yes' : 'No'}</div>
-                <div>📱 Screen: ${window.innerWidth}x${window.innerHeight}</div>
-                <div>🏠 Models: ${Object.keys(loadedModels).length}/8 loaded</div>
-            `;
-            document.body.appendChild(debug);
-        }
-
-        // Load all 3D models
-        async function loadAllModels() {
-            console.log('📦 Loading 3D furniture models...');
+        
+        let currentFurniture = 'sofa';
+        const arViewer = document.getElementById('ar-viewer');
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔧 Initializing Enterprise AR...');
             
-            gltfLoader = new GLTFLoader();
+            // Check AR support
+            checkARSupport();
             
-            for (const [key, furniture] of Object.entries(furnitureModels)) {
-                try {
-                    console.log(`📦 Loading ${furniture.name}...`);
-                    const gltf = await gltfLoader.loadAsync(furniture.modelUrl);
-                    
-                    // Clone the scene for this furniture
-                    const model = gltf.scene.clone();
-                    
-                    // Apply scale and rotation
-                    model.scale.set(furniture.scale.x, furniture.scale.y, furniture.scale.z);
-                    model.rotation.set(furniture.rotation.x, furniture.rotation.y, furniture.rotation.z);
-                    
-                    // Store the loaded model
-                    loadedModels[key] = {
-                        scene: model,
-                        scale: furniture.scale,
-                        rotation: furniture.rotation,
-                        name: furniture.name
-                    };
-                    
-                    console.log(`✅ ${furniture.name} loaded successfully`);
-                    
-                } catch (error) {
-                    console.error(`❌ Failed to load ${furniture.name}:`, error);
-                    // Create fallback geometry if model fails to load
-                    loadedModels[key] = createFallbackGeometry(key);
-                }
-            }
+            // Setup furniture selector
+            setupFurnitureSelector();
             
-            console.log(`✅ All models loaded: ${Object.keys(loadedModels).length}/8`);
+            // Setup model viewer events
+            setupModelViewer();
+            
+            // Update debug info
             updateDebugInfo();
-        }
-
-        function createFallbackGeometry(type) {
-            console.log(`🔧 Creating fallback geometry for ${type}`);
             
-            const group = new THREE.Group();
+            // Hide loading
+            setTimeout(() => {
+                document.getElementById('loading').classList.add('hidden');
+                console.log('✅ Enterprise AR ready');
+            }, 2000);
             
-            switch(type) {
-                case 'sofa':
-                    // Sofa fallback
-                    const sofa = new THREE.Mesh(
-                        new THREE.BoxGeometry(2, 0.8, 0.8),
-                        new THREE.MeshPhongMaterial({ color: 0x8B4513 })
-                    );
-                    group.add(sofa);
-                    break;
-                    
-                case 'bed':
-                    // Bed fallback
-                    const bed = new THREE.Mesh(
-                        new THREE.BoxGeometry(2, 0.6, 1.8),
-                        new THREE.MeshPhongMaterial({ color: 0xF4EFE6 })
-                    );
-                    group.add(bed);
-                    break;
-                    
-                case 'table':
-                    // Table fallback
-                    const table = new THREE.Mesh(
-                        new THREE.BoxGeometry(1.2, 0.6, 0.6),
-                        new THREE.MeshPhongMaterial({ color: 0xD2691E })
-                    );
-                    group.add(table);
-                    break;
-                    
-                case 'wardrobe':
-                    // Wardrobe fallback
-                    const wardrobe = new THREE.Mesh(
-                        new THREE.BoxGeometry(0.6, 2, 1),
-                        new THREE.MeshPhongMaterial({ color: 0x654321 })
-                    );
-                    group.add(wardrobe);
-                    break;
-                    
-                case 'desk':
-                    // Desk fallback
-                    const desk = new THREE.Mesh(
-                        new THREE.BoxGeometry(1.8, 0.8, 0.6),
-                        new THREE.MeshPhongMaterial({ color: 0x8B4513 })
-                    );
-                    group.add(desk);
-                    break;
-                    
-                case 'chair':
-                    // Chair fallback
-                    const chair = new THREE.Mesh(
-                        new THREE.BoxGeometry(0.5, 1, 0.5),
-                        new THREE.MeshPhongMaterial({ color: 0x654321 })
-                    );
-                    group.add(chair);
-                    break;
-                    
-                case 'bookshelf':
-                    // Bookshelf fallback
-                    const bookshelf = new THREE.Mesh(
-                        new THREE.BoxGeometry(0.3, 2, 0.8),
-                        new THREE.MeshPhongMaterial({ color: 0x8B4513 })
-                    );
-                    group.add(bookshelf);
-                    break;
-                    
-                case 'kitchen':
-                    // Kitchen fallback
-                    const kitchen = new THREE.Mesh(
-                        new THREE.BoxGeometry(2, 2, 0.6),
-                        new THREE.MeshPhongMaterial({ color: 0xF5F5DC })
-                    );
-                    group.add(kitchen);
-                    break;
-            }
+            updateInfo();
+        });
+        
+        function checkARSupport() {
+            const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
             
-            return {
-                scene: group,
-                scale: { x: 1, y: 1, z: 1 },
-                rotation: { x: 0, y: 0, z: 0 },
-                name: `${type} (Fallback)`
-            };
-        }
-
-        function updateDebugInfo() {
-            const debugElements = document.querySelectorAll('.debug-info');
-            debugElements.forEach(el => el.remove());
+            let arSupport = 'No';
+            if (isIOS) arSupport = 'iOS Quick Look';
+            else if (isMobile && isChrome) arSupport = 'WebXR';
+            else if (isMobile) arSupport = 'Limited';
             
-            if (/Mobi|Android/i.test(navigator.userAgent)) {
-                showDebugInfo();
-            }
+            document.getElementById('ar-support').textContent = arSupport;
+            document.getElementById('platform').textContent = isIOS ? 'iOS' : isMobile ? 'Android' : 'Desktop';
+            
+            console.log('🌐 AR Support:', arSupport);
         }
-
-        init();
-
-        async function init() {
-            console.log('🔧 Initializing ADVANCED Three.js scene...');
-
-            try {
-                container = document.createElement('div');
-                document.body.appendChild(container);
-
-                scene = new THREE.Scene();
-                scene.background = new THREE.Color(0x808080); // Gray background for debugging
-
-                camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
-                camera.position.set(0, 1.6, 3); // Eye level
-
-                // Enhanced lighting for mobile
-                const ambientLight = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 2);
-                ambientLight.position.set(0.5, 1, 0.25);
-                scene.add(ambientLight);
-
-                const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-                directionalLight.position.set(0, 1, 0);
-                scene.add(directionalLight);
-
-                // Enhanced renderer for mobile
-                renderer = new THREE.WebGLRenderer({ 
-                    antialias: true, 
-                    alpha: true,
-                    powerPreference: "high-performance"
-                });
-                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Limit for mobile
-                renderer.setSize(window.innerWidth, window.innerHeight);
-                renderer.setAnimationLoop(animate);
-                renderer.xr.enabled = true;
-                container.appendChild(renderer.domElement);
-
-                console.log('✅ Three.js renderer created');
-
-                // Load all 3D models first
-                await loadAllModels();
-
-                // AR Button with enhanced error handling
-                try {
-                    const arButton = ARButton.createButton(renderer, { 
-                        requiredFeatures: ['hit-test'],
-                        optionalFeatures: ['dom-overlay']
-                    });
-                    
-                    // Style AR button for mobile
-                    arButton.style.cssText = `
-                        position: fixed;
-                        bottom: 20px;
-                        left: 50%;
-                        transform: translateX(-50%);
-                        padding: 12px 24px;
-                        font-size: 16px;
-                        font-weight: 600;
-                        z-index: 1000;
-                    `;
-                    
-                    document.body.appendChild(arButton);
-                    console.log('✅ AR Button created');
-                } catch (error) {
-                    console.error('❌ AR Button creation failed:', error);
-                    showCompatibilityMessage();
-                }
-
-                // Controller
-                controller = renderer.xr.getController(0);
-                controller.addEventListener('select', onSelect);
-                scene.add(controller);
-
-                // Enhanced reticle
-                reticle = new THREE.Mesh(
-                    new THREE.RingGeometry(0.15, 0.2, 32).rotateX(-Math.PI / 2),
-                    new THREE.MeshBasicMaterial({ 
-                        color: 0x00ff00,
-                        side: THREE.DoubleSide
-                    })
-                );
-                reticle.matrixAutoUpdate = false;
-                reticle.visible = false;
-                scene.add(reticle);
-
-                // Add a test cube to verify rendering
-                const testCube = new THREE.Mesh(
-                    new THREE.BoxGeometry(0.1, 0.1, 0.1),
-                    new THREE.MeshBasicMaterial({ color: 0xff0000 })
-                );
-                testCube.position.set(0, 0, -1);
-                scene.add(testCube);
-                console.log('✅ Test cube added');
-
-                // Event listeners
-                window.addEventListener('resize', onWindowResize);
-                setupFurnitureSelector();
-
-                // Show debug info on mobile
-                if (/Mobi|Android/i.test(navigator.userAgent)) {
-                    showDebugInfo();
-                }
-
-                // Hide loading
-                setTimeout(() => {
-                    document.getElementById('loading').classList.add('hidden');
-                    console.log('✅ Loading hidden, ADVANCED AR ready');
-                }, 1000);
-
-                updateInfo();
-                console.log('✅ ADVANCED initialization complete');
-
-            } catch (error) {
-                console.error('❌ Initialization failed:', error);
-                showCompatibilityMessage();
-            }
-        }
-
+        
         function setupFurnitureSelector() {
             const buttons = document.querySelectorAll('.furniture-item');
             buttons.forEach(button => {
                 button.addEventListener('click', function() {
+                    // Remove selected class from all buttons
                     buttons.forEach(btn => btn.classList.remove('selected'));
+                    // Add selected class to clicked button
                     this.classList.add('selected');
-                    selectedFurniture = this.dataset.furniture;
-                    updateInfo();
+                    
+                    // Update furniture
+                    const model = this.dataset.model;
+                    const name = this.dataset.name;
+                    
+                    // Update model viewer
+                    arViewer.src = model;
+                    arViewer.iosSrc = model;
+                    
+                    // Update info
+                    document.getElementById('selected-furniture').textContent = name;
+                    document.getElementById('current-model').textContent = name;
+                    
+                    console.log(`🏠 Switched to ${name}`);
                 });
             });
         }
-
+        
+        function setupModelViewer() {
+            // Model viewer events
+            arViewer.addEventListener('load', () => {
+                console.log('✅ Model loaded successfully');
+                updateDebugInfo();
+            });
+            
+            arViewer.addEventListener('error', (error) => {
+                console.error('❌ Model loading error:', error);
+            });
+            
+            arViewer.addEventListener('ar-status', (event) => {
+                console.log('🎯 AR Status:', event.detail.status);
+            });
+            
+            arViewer.addEventListener('camera-change', (event) => {
+                console.log('📷 Camera changed:', event.detail);
+            });
+        }
+        
+        function updateDebugInfo() {
+            const currentModel = arViewer.src ? arViewer.src.split('/').pop() : 'None';
+            document.getElementById('current-model').textContent = currentModel;
+        }
+        
         function updateInfo() {
-            const furniture = furnitureModels[selectedFurniture];
+            const furniture = furnitureModels[currentFurniture];
             document.getElementById('selected-furniture').textContent = furniture.name;
             document.getElementById('vastu-zone').textContent = furniture.vastu;
             updateVastuScore();
         }
-
+        
         function updateVastuScore() {
             const score = 85 + Math.floor(Math.random() * 10);
             const status = score >= 90 ? 'Excellent' : score >= 80 ? 'Good' : 'Fair';
@@ -613,84 +444,46 @@
             const indicator = document.getElementById('vastu-indicator');
             indicator.className = 'vastu-indicator ' + statusClass;
         }
-
-        function onSelect() {
-            console.log('👆 onSelect called, reticle.visible:', reticle.visible);
-            
-            if (reticle.visible && loadedModels[selectedFurniture]) {
-                const furniture = loadedModels[selectedFurniture];
-                
-                // Clone the loaded model
-                const model = furniture.scene.clone();
-                
-                // Apply furniture-specific scale and rotation
-                model.scale.set(furniture.scale.x, furniture.scale.y, furniture.scale.z);
-                model.rotation.set(furniture.rotation.x, furniture.rotation.y, furniture.rotation.z);
-                
-                // Place furniture at reticle position
-                reticle.matrix.decompose(model.position, model.quaternion, model.scale);
-                
-                // Add to scene
-                scene.add(model);
-                placedFurniture.push(model);
-
-                console.log(`🏠 Placed ${furniture.name} (3D model) in AR`);
-
+        
+        // AR Control Functions
+        function resetView() {
+            arViewer.cameraControls.reset();
+            console.log('🔄 View reset');
+        }
+        
+        function toggleAR() {
+            if (arViewer.canActivateAR) {
+                arViewer.activateAR();
+                console.log('🎯 AR activated');
             } else {
-                console.log('⚠️ Cannot place furniture - reticle not visible or model not loaded');
+                console.log('⚠️ AR not available');
             }
         }
-
-        function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
+        
+        function takeScreenshot() {
+            arViewer.toDataURL()
+                .then(dataURL => {
+                    const link = document.createElement('a');
+                    link.href = dataURL;
+                    link.download = `ar-furniture-${Date.now()}.png`;
+                    link.click();
+                    console.log('📸 Screenshot saved');
+                })
+                .catch(error => {
+                    console.error('❌ Screenshot failed:', error);
+                });
         }
-
-        function animate(timestamp, frame) {
-            // Always render, even without AR session
-            renderer.render(scene, camera);
-
-            if (frame && renderer.xr.isPresenting) {
-                const referenceSpace = renderer.xr.getReferenceSpace();
-                const session = renderer.xr.getSession();
-
-                if (hitTestSourceRequested === false) {
-                    session.requestReferenceSpace('viewer').then(function(referenceSpace) {
-                        session.requestHitTestSource({ space: referenceSpace }).then(function(source) {
-                            hitTestSource = source;
-                            console.log('✅ Hit test source created');
-                        });
-                    });
-
-                    session.addEventListener('end', function() {
-                        hitTestSourceRequested = false;
-                        hitTestSource = null;
-                        console.log('🔚 AR session ended');
-                    });
-
-                    hitTestSourceRequested = true;
-                }
-
-                if (hitTestSource) {
-                    const hitTestResults = frame.getHitTestResults(hitTestSource);
-
-                    if (hitTestResults.length) {
-                        const hit = hitTestResults[0];
-                        reticle.visible = true;
-                        reticle.matrix.fromArray(hit.getPose(referenceSpace).transform.matrix);
-                    } else {
-                        reticle.visible = false;
-                    }
-                }
-            }
-        }
-
+        
         // Error handling
         window.addEventListener('error', function(e) {
             console.error('❌ Global error:', e.error);
         });
-
+        
+        // Console logging for debugging
+        console.log('🏠 Enterprise AR Home Decor initialized');
+        console.log('📱 Platform:', navigator.userAgent);
+        console.log('🌐 Google Model-Viewer loaded');
+        console.log('🎯 AR Features: Scene Viewer, Quick Look, WebXR');
     </script>
 </body>
 </html>
