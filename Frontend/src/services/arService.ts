@@ -62,12 +62,23 @@ export const arService = {
       return data;
     } catch (error) {
       console.error('Failed to create AR session:', error);
+      
+      // Try to get more error details
+      if (error instanceof Error) {
+        console.error('Error details:', {
+          name: error.name,
+          message: error.message,
+          stack: error.stack
+        });
+      }
+      
       // Return fallback for testing
+      console.log('Using fallback AR session...');
       return {
         success: true,
         session_id: 'demo-session-' + Date.now(),
-        mobile_url: 'https://antaralay-ar.vercel.app/ar/demo-session-' + Date.now(),
-        qr_code_data: 'https://antaralay-ar.vercel.app/ar/demo-session-' + Date.now(),
+        mobile_url: 'https://blacksujit.github.io/AntarAalay.AI/?designId=demo&roomId=demo&userId=demo&style=modern',
+        qr_code_data: 'https://blacksujit.github.io/AntarAalay.AI/?designId=demo&roomId=demo&userId=demo&style=modern',
         expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString()
       };
     }

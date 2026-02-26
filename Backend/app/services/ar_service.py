@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 
 from app.models.ar_session import ARSession, ARSessionStatus
+from app.models.design import Design
 from app.schemas.ar import (
     ARSessionCreateRequest, 
     ARSessionCreateResponse,
@@ -35,7 +36,7 @@ class ARService:
     def __init__(self):
         """Initialize AR service with storage service."""
         self.storage_service = get_storage_service()
-        self.base_url = os.getenv("AR_BASE_URL", "https://antaralay-ar.vercel.app")
+        self.base_url = os.getenv("AR_BASE_URL", "https://blacksujit.github.io/AntarAalay.AI")
         self.session_timeout_minutes = int(os.getenv("AR_SESSION_TIMEOUT_MINUTES", "60"))
         
     async def create_session(
@@ -103,8 +104,7 @@ class ARService:
                 room_id=request.room_id,
                 status=ARSessionStatus.PENDING,
                 expires_at=expires_at,
-                mobile_url=ar_url,
-                qr_code_data=ar_url
+                mobile_url=ar_url
             )
             
             # Save to database
@@ -119,7 +119,7 @@ class ARService:
                 session_id=session_id,
                 mobile_url=ar_url,
                 qr_code_data=ar_url,
-                expires_at=expires_at
+                expires_at=expires_at.isoformat()
             )
             
         except Exception as e:
