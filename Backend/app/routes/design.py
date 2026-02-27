@@ -90,18 +90,24 @@ async def generate_design(
         logger.info(f"Starting professional design generation for user {user_id}")
         logger.info(f"Room ID: {request.room_id}, Style: {request.style}, Wall: {request.wall_color}, Flooring: {request.flooring_material}")
         
-        # Use Models Lab AI engine for professional interior design
+        # Use Flux Working AI engine for professional interior design
         from app.services.ai_engine import EngineFactory, EngineType
         from app.services.ai_engine.base_engine import GenerationRequest
+        from app.config import get_settings
         
-        # Create Models Lab engine with empty key to force fallback immediately
+        settings = get_settings()
+        
+        # Create Flux Working engine with proper configuration
         engine_config = {
-            'models_lab_api_key': '',  # Empty to force fallback immediately
-            'device': 'cpu'
+            'hf_token': settings.HF_TOKEN,
+            'device': settings.DEVICE,
+            'max_generations_per_hour': settings.FLUX_MAX_GENERATIONS_PER_HOUR,
+            'max_generations_per_day': settings.FLUX_MAX_GENERATIONS_PER_DAY,
+            'cooldown_seconds': settings.FLUX_COOLDOWN_SECONDS
         }
-        print(f"Creating Models Lab engine...")
-        engine = EngineFactory.create_engine(EngineType.LOCAL_SDXL, engine_config)
-        print(f"Models Lab engine created successfully")
+        print(f"Creating Flux Working engine with token: {'✅' if settings.HF_TOKEN else '❌'}")
+        engine = EngineFactory.create_engine(EngineType.FLUX_WORKING, engine_config)
+        print(f"Flux Working engine created successfully")
         
         # Find all room images
         rooms = []
@@ -165,18 +171,12 @@ async def generate_design(
         )
         print(f"GenerationRequest created successfully")
         
-        # Use AI engine from environment configuration
-        print(f"Creating AI engine from environment...")
+        # Use the Flux Working engine we already created
+        print(f"Using Flux Working engine for generation...")
         
         result = GenerationResult(success=False, generated_images=[], error_message="Not initialized")
         
         try:
-            from app.services.ai_engine import EngineFactory
-            
-            # Get engine from environment (pollinations, local_sdxl, etc.)
-            engine = EngineFactory.get_engine_from_env()
-            print(f"✅ {type(engine).__name__} created from environment")
-            
             result = await engine.generate_img2img(gen_request)
             print(f"AI generation result: success={result.success}, images={len(result.generated_images)}")
             
