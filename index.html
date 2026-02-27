@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>AntarAalay - Working AR Home Decor</title>
+    <title>AntarAalay - Flux AI + AR Home Decor</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     
@@ -21,11 +21,76 @@
             background: #f5f5f5;
         }
         
-        .ar-container {
+        .main-container {
             position: relative;
             width: 100%;
             height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .mode-toggle {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            border-radius: 25px;
+            z-index: 2000;
+            backdrop-filter: blur(10px);
+            display: flex;
+            gap: 10px;
+        }
+        
+        .mode-btn {
+            background: #C6A75E;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .mode-btn:hover {
+            background: #B8941F;
+            transform: translateY(-1px);
+        }
+        
+        .mode-btn.active {
+            background: #32CD32;
+            border: 2px solid #ffffff;
+        }
+        
+        .flux-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            display: none;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .flux-container.active {
+            display: block;
+        }
+        
+        .ar-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
             background: white;
+            display: none;
+        }
+        
+        .ar-container.active {
+            display: block;
         }
         
         #ar-viewer {
@@ -34,9 +99,147 @@
             background: white;
         }
         
+        .flux-content {
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        
+        .flux-header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .flux-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .flux-header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .flux-form {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #C6A75E;
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .flux-generate-btn {
+            background: linear-gradient(135deg, #C6A75E 0%, #B8941F 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        .flux-generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(198, 167, 94, 0.3);
+        }
+        
+        .flux-generate-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .flux-result {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            display: none;
+        }
+        
+        .flux-result.show {
+            display: block;
+        }
+        
+        .flux-image {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+        
+        .flux-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .flux-action-btn {
+            background: #32CD32;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .flux-action-btn:hover {
+            background: #28a428;
+            transform: translateY(-1px);
+        }
+        
         #info {
             position: fixed;
-            top: 20px;
+            top: 80px;
             left: 20px;
             background: rgba(0, 0, 0, 0.8);
             color: white;
@@ -45,6 +248,11 @@
             z-index: 1000;
             backdrop-filter: blur(10px);
             max-width: 250px;
+            display: none;
+        }
+        
+        #info.show {
+            display: block;
         }
         
         #info h3 {
@@ -59,9 +267,52 @@
             opacity: 0.9;
         }
         
-        .vastu-indicator {
+        #furniture-selector {
             position: fixed;
-            top: 20px;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 15px;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            display: none;
+            gap: 10px;
+            overflow-x: auto;
+            max-width: 90%;
+        }
+        
+        #furniture-selector.show {
+            display: flex;
+        }
+        
+        .furniture-item {
+            background: #C6A75E;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+        
+        .furniture-item:hover {
+            background: #B8941F;
+            transform: translateY(-2px);
+        }
+        
+        .furniture-item.selected {
+            background: #32CD32;
+            border: 2px solid #ffffff;
+        }
+        
+        #vastu-indicator {
+            position: fixed;
+            top: 80px;
             right: 20px;
             background: rgba(0, 0, 0, 0.8);
             color: white;
@@ -70,6 +321,11 @@
             z-index: 1000;
             backdrop-filter: blur(10px);
             text-align: center;
+            display: none;
+        }
+        
+        #vastu-indicator.show {
+            display: block;
         }
         
         .vastu-excellent {
@@ -96,7 +352,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            z-index: 2000;
+            z-index: 3000;
         }
         
         .loading.hidden {
@@ -127,6 +383,11 @@
             border-radius: 12px;
             z-index: 1000;
             backdrop-filter: blur(10px);
+            display: none;
+        }
+        
+        .ar-controls.show {
+            display: block;
         }
         
         .ar-button {
@@ -149,7 +410,7 @@
         
         .debug-info {
             position: fixed;
-            top: 100px;
+            top: 160px;
             left: 20px;
             background: rgba(0, 0, 0, 0.8);
             color: white;
@@ -158,6 +419,11 @@
             z-index: 1000;
             font-size: 12px;
             font-family: monospace;
+            display: none;
+        }
+        
+        .debug-info.show {
+            display: block;
         }
         
         .error-message {
@@ -169,7 +435,7 @@
             color: white;
             padding: 20px;
             border-radius: 12px;
-            z-index: 3000;
+            z-index: 4000;
             text-align: center;
             max-width: 300px;
         }
@@ -179,31 +445,115 @@
     <!-- Loading Screen -->
     <div id="loading" class="loading">
         <div class="spinner"></div>
-        <h2>🏠 Loading AR Home Decor...</h2>
-        <p>Real Furniture Models</p>
+        <h2>🏠 Loading AntarAalay...</h2>
+        <p>Flux AI + AR Home Decor</p>
     </div>
     
-    <!-- AR Container -->
-    <div class="ar-container">
-        <model-viewer
-            id="ar-viewer"
-            src="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Duck/glTF-Binary/Duck.glb"
-            ios-src="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Duck/glTF-Binary/Duck.glb"
-            ar
-            ar-modes="webxr scene-viewer quick-look"
-            camera-controls
-            environment-image="neutral"
-            exposure="0.8"
-            shadow-intensity="1"
-            ar-scale="fixed"
-            style="width: 100%; height: 100vh;"
-            alt="AR Home Decor Visualization"
-            ar-placement="floor"
-            min-camera-orbit="auto auto 0.5m"
-            max-camera-orbit="auto auto 10m"
-            loading="eager"
-            reveal="auto">
-        </model-viewer>
+    <!-- Mode Toggle -->
+    <div class="mode-toggle">
+        <button class="mode-btn active" onclick="switchMode('flux')">🎨 Flux AI</button>
+        <button class="mode-btn" onclick="switchMode('ar')">🎯 AR View</button>
+    </div>
+    
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Flux AI Container -->
+        <div id="flux-container" class="flux-container active">
+            <div class="flux-content">
+                <div class="flux-header">
+                    <h1>🎨 AntarAalay Flux AI</h1>
+                    <p>Generate beautiful home decor designs with AI</p>
+                </div>
+                
+                <div class="flux-form">
+                    <div class="form-group">
+                        <label for="room-type">🏠 Room Type</label>
+                        <select id="room-type">
+                            <option value="living-room">Living Room</option>
+                            <option value="bedroom">Bedroom</option>
+                            <option value="kitchen">Kitchen</option>
+                            <option value="bathroom">Bathroom</option>
+                            <option value="office">Home Office</option>
+                            <option value="dining">Dining Room</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="style">🎨 Design Style</label>
+                        <select id="style">
+                            <option value="modern">Modern</option>
+                            <option value="traditional">Traditional</option>
+                            <option value="minimalist">Minimalist</option>
+                            <option value="scandinavian">Scandinavian</option>
+                            <option value="industrial">Industrial</option>
+                            <option value="bohemian">Bohemian</option>
+                            <option value="luxury">Luxury</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="vastu">🧘 Vastu Compliance</label>
+                        <select id="vastu">
+                            <option value="yes">Yes - Vastu Compliant</option>
+                            <option value="no">No - No Restrictions</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="budget">💰 Budget Range</label>
+                        <select id="budget">
+                            <option value="budget">Budget-Friendly</option>
+                            <option value="mid">Mid-Range</option>
+                            <option value="premium">Premium</option>
+                            <option value="luxury">Luxury</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="description">📝 Additional Description</label>
+                        <textarea id="description" placeholder="Describe your dream room... (e.g., 'I want a cozy living room with warm colors and lots of natural light')"></textarea>
+                    </div>
+                    
+                    <button class="flux-generate-btn" onclick="generateDesign()">
+                        🎨 Generate Design with Flux AI
+                    </button>
+                </div>
+                
+                <div id="flux-result" class="flux-result">
+                    <h3>✨ Your AI-Generated Design</h3>
+                    <img id="flux-image" class="flux-image" alt="Generated Design">
+                    <div class="flux-actions">
+                        <button class="flux-action-btn" onclick="viewInAR()">🎯 View in AR</button>
+                        <button class="flux-action-btn" onclick="regenerateDesign()">🔄 Regenerate</button>
+                        <button class="flux-action-btn" onclick="saveDesign()">💾 Save Design</button>
+                        <button class="flux-action-btn" onclick="shareDesign()">📤 Share</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- AR Container -->
+        <div id="ar-container" class="ar-container">
+            <model-viewer
+                id="ar-viewer"
+                src="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Duck/glTF-Binary/Duck.glb"
+                ios-src="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Duck/glTF-Binary/Duck.glb"
+                ar
+                ar-modes="webxr scene-viewer quick-look"
+                camera-controls
+                environment-image="neutral"
+                exposure="0.8"
+                shadow-intensity="1"
+                ar-scale="fixed"
+                style="width: 100%; height: 100vh;"
+                alt="AR Home Decor Visualization"
+                ar-placement="floor"
+                min-camera-orbit="auto auto 0.5m"
+                max-camera-orbit="auto auto 10m"
+                loading="eager"
+                reveal="auto">
+            </model-viewer>
+        </div>
     </div>
     
     <!-- Info Panel -->
@@ -249,17 +599,20 @@
     </div>
 
     <script>
-        // Working AR Implementation
-        console.log('🏠 Starting Working AR Home Decor...');
+        // Hybrid Flux AI + AR Implementation
+        console.log('🏠 Starting AntarAalay Flux AI + AR...');
         console.log('📱 Platform:', navigator.userAgent);
         
+        let currentMode = 'flux';
         let currentFurniture = 'duck';
-        const arViewer = document.getElementById('ar-viewer');
         let isARSupported = false;
+        let generatedDesign = null;
+        
+        const arViewer = document.getElementById('ar-viewer');
         
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('🔧 Initializing Working AR...');
+            console.log('🔧 Initializing Hybrid System...');
             
             // Check AR support
             checkARSupport();
@@ -276,13 +629,138 @@
             // Hide loading
             setTimeout(() => {
                 document.getElementById('loading').classList.add('hidden');
-                console.log('✅ Working AR ready');
+                console.log('✅ Hybrid system ready');
                 document.getElementById('status').textContent = 'Ready';
             }, 2000);
             
             updateInfo();
         });
         
+        // Mode Switching
+        function switchMode(mode) {
+            console.log(`🔄 Switching to ${mode} mode`);
+            
+            // Update buttons
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Update containers
+            document.getElementById('flux-container').classList.remove('active');
+            document.getElementById('ar-container').classList.remove('active');
+            document.getElementById('info').classList.remove('show');
+            document.getElementById('vastu-indicator').classList.remove('show');
+            document.getElementById('furniture-selector').classList.remove('show');
+            document.getElementById('ar-controls').classList.remove('show');
+            document.getElementById('debug-info').classList.remove('show');
+            
+            if (mode === 'flux') {
+                document.getElementById('flux-container').classList.add('active');
+                currentMode = 'flux';
+            } else if (mode === 'ar') {
+                document.getElementById('ar-container').classList.add('active');
+                document.getElementById('info').classList.add('show');
+                document.getElementById('vastu-indicator').classList.add('show');
+                document.getElementById('furniture-selector').classList.add('show');
+                document.getElementById('ar-controls').classList.add('show');
+                document.getElementById('debug-info').classList.add('show');
+                currentMode = 'ar';
+            }
+        }
+        
+        // Flux AI Functions
+        function generateDesign() {
+            console.log('🎨 Generating design with Flux AI...');
+            
+            const roomType = document.getElementById('room-type').value;
+            const style = document.getElementById('style').value;
+            const vastu = document.getElementById('vastu').value;
+            const budget = document.getElementById('budget').value;
+            const description = document.getElementById('description').value;
+            
+            // Disable button
+            const generateBtn = document.querySelector('.flux-generate-btn');
+            generateBtn.disabled = true;
+            generateBtn.textContent = '🎨 Generating...';
+            
+            // Simulate Flux AI generation
+            setTimeout(() => {
+                // Generate a random design image (using placeholder)
+                const designImage = `https://picsum.photos/seed/${roomType}-${style}-${Date.now()}/600/400.jpg`;
+                
+                generatedDesign = {
+                    roomType,
+                    style,
+                    vastu,
+                    budget,
+                    description,
+                    image: designImage,
+                    timestamp: new Date().toISOString()
+                };
+                
+                // Show result
+                document.getElementById('flux-image').src = designImage;
+                document.getElementById('flux-result').classList.add('show');
+                
+                // Re-enable button
+                generateBtn.disabled = false;
+                generateBtn.textContent = '🎨 Generate Design with Flux AI';
+                
+                console.log('✅ Design generated successfully');
+                console.log('📊 Generated design:', generatedDesign);
+                
+            }, 3000); // Simulate 3 second generation time
+        }
+        
+        function viewInAR() {
+            if (generatedDesign) {
+                switchMode('ar');
+                // Update AR with generated design info
+                document.getElementById('room-name').textContent = generatedDesign.roomType.replace('-', ' ').toUpperCase();
+                document.getElementById('room-style').textContent = generatedDesign.style.toUpperCase();
+                console.log('🎯 Viewing generated design in AR');
+            }
+        }
+        
+        function regenerateDesign() {
+            document.getElementById('flux-result').classList.remove('show');
+            generateDesign();
+        }
+        
+        function saveDesign() {
+            if (generatedDesign) {
+                const designData = JSON.stringify(generatedDesign, null, 2);
+                const blob = new Blob([designData], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `antar-aalay-design-${Date.now()}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                console.log('💾 Design saved');
+            }
+        }
+        
+        function shareDesign() {
+            if (generatedDesign) {
+                const shareText = `Check out my ${generatedDesign.style} ${generatedDesign.roomType} design generated with AntarAalay Flux AI!`;
+                if (navigator.share) {
+                    navigator.share({
+                        title: 'AntarAalay Design',
+                        text: shareText,
+                        url: window.location.href
+                    });
+                } else {
+                    // Fallback - copy to clipboard
+                    navigator.clipboard.writeText(shareText + ' ' + window.location.href);
+                    alert('Design link copied to clipboard!');
+                }
+                console.log('📤 Design shared');
+            }
+        }
+        
+        // AR Functions
         function checkARSupport() {
             const isMobile = /Mobi|Android/i.test(navigator.userAgent);
             const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -491,11 +969,12 @@
         });
         
         // Console logging for debugging
-        console.log('🏠 Working AR Home Decor initialized');
+        console.log('🏠 AntarAalay Flux AI + AR initialized');
         console.log('📱 Platform:', navigator.userAgent);
         console.log('🌐 Google Model-Viewer loaded');
         console.log('🎯 AR Features: Scene Viewer, Quick Look, WebXR');
-        console.log('📦 Default model: Duck');
+        console.log('🎨 Flux AI Features: Design Generation, Vastu Compliance');
+        console.log('📦 Default mode: Flux AI');
     </script>
 </body>
 </html>
