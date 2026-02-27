@@ -670,8 +670,8 @@
         }
         
         // Flux AI Functions
-        function generateDesign() {
-            console.log('🎨 Generating design with Flux AI...');
+        async function generateDesign() {
+            console.log('🎨 Generating design with Real Flux AI...');
             
             const roomType = document.getElementById('room-type').value;
             const style = document.getElementById('style').value;
@@ -684,33 +684,90 @@
             generateBtn.disabled = true;
             generateBtn.textContent = '🎨 Generating...';
             
-            // Simulate Flux AI generation
-            setTimeout(() => {
-                // Generate a random design image (using placeholder)
-                const designImage = `https://picsum.photos/seed/${roomType}-${style}-${Date.now()}/600/400.jpg`;
+            try {
+                // Call REAL backend API
+                const response = await fetch('http://127.0.0.1:8000/api/design/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        room_id: 'demo-room-living', // Use demo room for now
+                        room_type: roomType,
+                        style: style,
+                        wall_color: 'neutral',
+                        flooring_material: 'wood',
+                        description: description
+                    })
+                });
                 
-                generatedDesign = {
-                    roomType,
-                    style,
-                    vastu,
-                    budget,
-                    description,
-                    image: designImage,
-                    timestamp: new Date().toISOString()
-                };
+                const result = await response.json();
                 
-                // Show result
-                document.getElementById('flux-image').src = designImage;
-                document.getElementById('flux-result').classList.add('show');
+                if (response.ok && result.status === 'success') {
+                    // Store generated design
+                    generatedDesign = {
+                        roomType,
+                        style,
+                        vastu,
+                        budget,
+                        description,
+                        designId: result.design_id,
+                        timestamp: new Date().toISOString()
+                    };
+                    
+                    // Show result with real generated images
+                    document.getElementById('flux-result').classList.add('show');
+                    
+                    // Get the generated images from backend
+                    const designResponse = await fetch(`http://127.0.0.1:8000/api/design/${result.design_id}`);
+                    const designData = await designResponse.json();
+                    
+                    // Display the first generated image
+                    if (designData.image_1_url) {
+                        document.getElementById('flux-image').src = designData.image_1_url;
+                    }
+                    
+                    console.log('✅ Real Flux AI design generated successfully');
+                    console.log('📊 Generated design:', generatedDesign);
+                    console.log('🖼️ Generated images:', designData);
+                    
+                } else {
+                    throw new Error(result.detail || 'Generation failed');
+                }
                 
-                // Re-enable button
-                generateBtn.disabled = false;
-                generateBtn.textContent = '🎨 Generate Design with Flux AI';
+            } catch (error) {
+                console.error('❌ Flux AI generation failed:', error);
                 
-                console.log('✅ Design generated successfully');
-                console.log('📊 Generated design:', generatedDesign);
+                // Show error message
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error-message';
+                errorDiv.innerHTML = `
+                    <h3>⚠️ Generation Failed</h3>
+                    <p>${error.message}</p>
+                    <button onclick="this.parentElement.remove()" style="
+                        background: white;
+                        color: #dc3545;
+                        border: none;
+                        padding: 10px 20px;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        margin-top: 15px;
+                        font-weight: 600;
+                    ">OK</button>
+                `;
+                document.body.appendChild(errorDiv);
                 
-            }, 3000); // Simulate 3 second generation time
+                // Auto-remove after 5 seconds
+                setTimeout(() => {
+                    if (errorDiv.parentElement) {
+                        errorDiv.remove();
+                    }
+                }, 5000);
+            }
+            
+            // Re-enable button
+            generateBtn.disabled = false;
+            generateBtn.textContent = '🎨 Generate Design with Flux AI';
         }
         
         function viewInAR() {
@@ -729,34 +786,57 @@
         }
         
         function saveDesign() {
-            if (generatedDesign) {
-                const designData = JSON.stringify(generatedDesign, null, 2);
-                const blob = new Blob([designData], { type: 'application/json' });
+            if (generatedDesign && generatedDesign.designId) {
+                // Create a download link to the design
+                const designUrl = `http://127.0.0.1:8000/api/design/${generatedDesign.designId}`;
+                
+                // Create a JSON file with design data
+                const designData = {
+                    designId: generatedDesign.designId,
+                    roomType: generatedDesign.roomType,
+                    style: generatedDesign.style,
+                    vastu: generatedDesign.vastu,
+                    budget: generatedDesign.budget,
+                    description: generatedDesign.description,
+                    designUrl: designUrl,
+                    timestamp: generatedDesign.timestamp
+                };
+                
+                const dataStr = JSON.stringify(designData, null, 2);
+                const blob = new Blob([dataStr], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `antar-aalay-design-${Date.now()}.json`;
+                a.download = `antar-aalay-design-${generatedDesign.designId}.json`;
                 a.click();
                 URL.revokeObjectURL(url);
-                console.log('💾 Design saved');
+                console.log('💾 Design saved with backend ID:', generatedDesign.designId);
+            } else {
+                alert('Please generate a design first!');
             }
         }
         
         function shareDesign() {
-            if (generatedDesign) {
-                const shareText = `Check out my ${generatedDesign.style} ${generatedDesign.roomType} design generated with AntarAalay Flux AI!`;
+            if (generatedDesign && generatedDesign.designId) {
+                const shareText = `Check out my ${generatedDesign.style} ${generatedDesign.roomType} design generated with AntarAalay Flux AI!\n\nView it here: http://127.0.0.1:8000/api/design/${generatedDesign.designId}`;
+                
                 if (navigator.share) {
                     navigator.share({
                         title: 'AntarAalay Design',
                         text: shareText,
-                        url: window.location.href
+                        url: `http://127.0.0.1:8000/api/design/${generatedDesign.designId}`
                     });
                 } else {
                     // Fallback - copy to clipboard
-                    navigator.clipboard.writeText(shareText + ' ' + window.location.href);
-                    alert('Design link copied to clipboard!');
+                    navigator.clipboard.writeText(shareText).then(() => {
+                        alert('Design link copied to clipboard!\n\n' + shareText);
+                    }).catch(() => {
+                        alert('Design link:\n\n' + shareText);
+                    });
                 }
-                console.log('📤 Design shared');
+                console.log('📤 Design shared with backend ID:', generatedDesign.designId);
+            } else {
+                alert('Please generate a design first!');
             }
         }
         
