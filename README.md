@@ -10,7 +10,7 @@ Transform your space with AI-generated interior designs that align with ancient 
 - **Vastu Analysis**: Every design is analyzed for Vastu compliance with actionable suggestions
 - **Budget Planning**: Accurate cost estimates and furniture breakdowns
 - **Style Options**: Modern, Traditional Indian, Minimalist, Luxury, Bohemian, Scandinavian, Industrial, Contemporary
-- **Direction Analysis**: Vastu scores based on room direction (North, South, East, West, etc.)
+- **Direction Analysis**: Vastu scores based on room direction (North, South, East, West, etc...)
 
 ## Tech Stack
 
